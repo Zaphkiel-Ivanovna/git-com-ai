@@ -1,0 +1,92 @@
+{
+  "name": "gitcomai",
+  "displayName": "GitCom-AI",
+  "description": "Generate commit messages using Anthropic AI based on git diff",
+  "version": "0.2.10",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "publisher": "ZaphkielIvanovna",
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:gitcomai.generateCommitMessage"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "gitcomai.generateCommitMessage",
+        "title": "Generate Commit Message with AI",
+        "icon": {
+          "light": "resources/light/commit-icon.svg",
+          "dark": "resources/dark/commit-icon.svg"
+        }
+      }
+    ],
+    "menus": {
+      "scm/title": [
+        {
+          "command": "gitcomai.generateCommitMessage",
+          "group": "navigation",
+          "when": "scmProvider == git"
+        }
+      ],
+      "scm/inputBox": [
+        {
+          "command": "gitcomai.generateCommitMessage",
+          "when": "scmProvider == git",
+          "group": "inline"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "GitComAI",
+      "properties": {
+        "gitcomai.anthropicApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API Key for Anthropic Claude"
+        },
+        "gitcomai.model": {
+          "type": "string",
+          "default": "claude-3-7-sonnet-latest",
+          "enum": [
+            "claude-3-7-sonnet-latest",
+            "claude-3-5-haiku-latest",
+            "claude-3-5-sonnet-latest",
+            "claude-3-opus-latest"
+          ],
+          "description": "Anthropic Claude model to use"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "lint": "eslint src --ext ts",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "test": "node ./out/test/runTest.js",
+    "vsix": "vsce package"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.38.0"
+  },
+  "devDependencies": {
+    "@types/node": "^16.18.126",
+    "@types/vscode": "^1.95.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.57.1",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.7.3",
+    "webpack": "^5.98.0",
+    "webpack-cli": "^5.1.4"
+  }
+}
