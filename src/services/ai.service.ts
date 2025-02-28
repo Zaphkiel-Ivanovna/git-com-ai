@@ -4,15 +4,14 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createMistral } from '@ai-sdk/mistral';
 import { createOllama } from 'ollama-ai-provider';
+import { AIProvider, AnthropicModel, IModelConfig } from '../@types/types';
+import { logger } from '../utils/logger';
 import {
-  AIProvider,
+  commitMessageSchema,
   ICommitBodyItem,
   ICommitMessage,
-  IModelConfig,
-} from '../types';
-import { logger } from '../logger';
-import { commitMessageSchema } from '../commitSchema';
-import { loadCommitPrompt } from './promptLoader';
+} from '../models/commit.schema';
+import { loadCommitPrompt } from '../prompts/prompt-loader.util';
 
 export class AIService {
   private apiKeys: Record<string, string | undefined> = {
@@ -20,7 +19,6 @@ export class AIService {
     openai: undefined,
     mistral: undefined,
   };
-
   private ollamaBaseURL: string | undefined;
 
   constructor() {
@@ -107,7 +105,7 @@ export class AIService {
       const config = vscode.workspace.getConfiguration('gitcomai');
       const modelConfig: IModelConfig = config.get('selectedModel') || {
         provider: AIProvider.ANTHROPIC,
-        model: 'claude-3-7-sonnet-latest',
+        model: AnthropicModel.CLAUDE_3_7_SONNET,
       };
 
       const prompts = await loadCommitPrompt(diff, files);

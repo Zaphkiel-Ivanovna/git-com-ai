@@ -3,7 +3,7 @@ import {
   MistralModel,
   OllamaModel,
   OpenAIModel,
-} from '../types';
+} from '../@types/types';
 
 export interface IModelOption {
   label: string;

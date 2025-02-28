@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
-import { GitService } from './gitService';
-import { AIService } from './ai/aiService';
-import { UIHandler } from './uiHandler';
-import { logger } from './logger';
-import { modelOptions } from './ai/modelConfig';
-import { AIProvider, IModelConfig } from './types';
+import { GitService } from './services/git.service';
+import { AIService } from './services/ai.service';
+import { logger } from './utils/logger';
+import { modelOptions } from './configs/model.config';
+import { AIProvider, IModelConfig } from './@types/types';
+import { UIHandler } from './ui/ui.handler';
 
 export function activate(context: vscode.ExtensionContext): void {
   logger.log('GitComAI extension activated');

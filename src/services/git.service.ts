@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { exec } from 'child_process';
 import * as util from 'util';
-import { IGitDiff } from './types';
+import { IGitDiff } from '../@types/types';
 
 export class GitService {
   private execPromise = util.promisify(exec);
@@ -19,19 +19,14 @@ export class GitService {
         'git diff --staged',
         { cwd: workspaceFolder }
       );
-      const { stdout: unstagedChanges } = await this.execPromise('git diff', {
-        cwd: workspaceFolder,
-      });
 
-      const diff = stagedChanges || unstagedChanges;
-
-      if (!diff) {
+      if (!stagedChanges) {
         vscode.window.showInformationMessage('No changes detected');
         return null;
       }
 
       return {
-        diff,
+        diff: stagedChanges,
         workingDirectory: workspaceFolder,
       };
     } catch (error) {
@@ -45,7 +40,6 @@ export class GitService {
   public async getStagedFiles(): Promise<string[]> {
     try {
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
-
       if (!workspaceFolder) {
         vscode.window.showErrorMessage('No workspace folder open');
         return [];

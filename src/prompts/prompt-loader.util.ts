@@ -1,19 +1,13 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { logger } from '../logger';
+import { logger } from '../utils/logger';
 
-/**
- * Interface pour les prompts retournés
- */
 export interface IPrompts {
   systemPrompt: string;
   userPrompt: string;
 }
 
-/**
- * Charge le prompt depuis un fichier texte et retourne à la fois le system prompt et le user prompt
- */
 export async function loadCommitPrompt(
   diff: string,
   files: string[]

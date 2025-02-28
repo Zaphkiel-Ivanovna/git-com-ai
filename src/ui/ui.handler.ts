@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ICommitMessage } from './types';
+import { ICommitMessage } from '../models/commit.schema';
 
 export class UIHandler {
   public async showCommitMessageInput(

@@ -23,5 +23,5 @@ export const commitMessageSchema = z.object({
     .describe('Optional additional details about the changes'),
 });
 
-export type CommitBodyItem = z.infer<typeof commitBodyItemSchema>;
-export type CommitMessage = z.infer<typeof commitMessageSchema>;
+export type ICommitBodyItem = z.infer<typeof commitBodyItemSchema>;
+export type ICommitMessage = z.infer<typeof commitMessageSchema>;

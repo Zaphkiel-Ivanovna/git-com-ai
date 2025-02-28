@@ -61,27 +61,6 @@ export interface IModelConfig {
   model: string;
 }
 
-/**
- * Interface pour un élément du corps du message de commit
- */
-export interface ICommitBodyItem {
-  emoji: string;
-  type: string;
-  scope?: string;
-  description: string;
-}
-
-/**
- * Interface pour un message de commit
- */
-export interface ICommitMessage {
-  emoji: string;
-  type: string;
-  scope?: string;
-  description: string;
-  body?: ICommitBodyItem[];
-}
-
 export interface IGitDiff {
   diff: string;
   workingDirectory: string;
