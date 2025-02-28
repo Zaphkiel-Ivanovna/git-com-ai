@@ -3,7 +3,7 @@ import { GitService } from './gitService';
 import { AIService } from './ai/aiService';
 import { UIHandler } from './uiHandler';
 import { logger } from './logger';
-import { modelOptions } from './modelConfig';
+import { modelOptions } from './ai/modelConfig';
 import { IModelConfig } from './types';
 
 export function activate(context: vscode.ExtensionContext): void {
