@@ -24,14 +24,9 @@ GitComAI is a VSCode extension that automatically generates meaningful Git commi
   - [💻 Development](#-development)
     - [Project Structure](#project-structure)
     - [Setting Up Development Environment](#setting-up-development-environment)
-- [or](#or)
-  - [Building the Extension](#building-the-extension)
-- [or](#or-1)
-- [or](#or-2)
-  - [Testing](#testing)
-- [or](#or-3)
-  - [Packaging](#packaging)
-- [or](#or-4)
+    - [Building the Extension](#building-the-extension)
+    - [Testing](#testing)
+    - [Packaging](#packaging)
   - [❓ FAQ](#-faq)
   - [🔧 Troubleshooting](#-troubleshooting)
   - [👥 Contributing](#-contributing)
@@ -80,19 +75,19 @@ GitComAI is a VSCode extension that automatically generates meaningful Git commi
 
 GitComAI can be configured through VSCode settings:
 
-'''json
+```json
 {
-"gitcomai.anthropicApiKey": "YOUR_ANTHROPIC_API_KEY",
-"gitcomai.openaiApiKey": "YOUR_OPENAI_API_KEY",
-"gitcomai.mistralApiKey": "YOUR_MISTRAL_API_KEY",
-"gitcomai.ollamaBaseURL": "http://localhost:11434",
-"gitcomai.selectedModel": {
-"provider": "anthropic",
-"model": "claude-3-7-sonnet-latest"
-},
-"gitcomai.debug": false
+  "gitcomai.anthropicApiKey": "YOUR_ANTHROPIC_API_KEY",
+  "gitcomai.openaiApiKey": "YOUR_OPENAI_API_KEY",
+  "gitcomai.mistralApiKey": "YOUR_MISTRAL_API_KEY",
+  "gitcomai.ollamaBaseURL": "http://localhost:11434",
+  "gitcomai.selectedModel": {
+    "provider": "anthropic",
+    "model": "claude-3-7-sonnet-latest"
+  },
+  "gitcomai.debug": false
 }
-'''
+```
 
 ### Available Settings
 
@@ -126,7 +121,7 @@ GitComAI operates in four main steps:
 
 ### Project Structure
 
-'''
+```
 GitComAI/
 ├── .eslintrc.json # ESLint configuration
 ├── .vscodeignore # Files to ignore when packaging
@@ -144,7 +139,7 @@ GitComAI/
 └── ai/
 ├── aiService.ts # AI service integration
 └── promptLoader.ts # Prompt loading utility
-'''
+```
 
 ### Setting Up Development Environment
 
@@ -156,39 +151,43 @@ GitComAI/
    - VSCode
 
 2. **Clone the repository**:
-   '''bash
+
+   ```bash
    git clone https://github.com/Zaphkiel-Ivanovna/git-com-ai.git
    cd gitcomai
-   '''
+   ```
 
 3. **Install dependencies**:
-   '''bash
+
+   ```bash
    npm install
 
    # or
 
    yarn install
-   '''
+   ```
 
 ### Building the Extension
 
 1. **Compile the extension**:
-   '''bash
+
+   ```bash
    npm run compile
 
    # or
 
    yarn compile
-   '''
+   ```
 
 2. **Watch for changes** (development mode):
-   '''bash
+
+   ```bash
    npm run watch
 
    # or
 
    yarn watch
-   '''
+   ```
 
 3. **Launch the extension in debug mode**:
    - Press `F5` in VSCode to launch a new VSCode instance with the extension loaded
@@ -198,25 +197,25 @@ GitComAI/
 
 Run the tests with:
 
-'''bash
+```bash
 npm run test
 
 # or
 
 yarn test
-'''
+```
 
 ### Packaging
 
 Create a VSIX package for distribution:
 
-'''bash
+```bash
 npm run package
 
 # or
 
 yarn package
-'''
+```
 
 The VSIX file will be created in the project root directory.
 
