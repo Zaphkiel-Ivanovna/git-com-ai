@@ -1,14 +1,16 @@
 import * as vscode from 'vscode';
 import { GitService } from './gitService';
-import { AnthropicService } from './anthropicService';
+import { AIService } from './ai/aiService';
 import { UIHandler } from './uiHandler';
 import { logger } from './logger';
+import { modelOptions } from './modelConfig';
+import { IModelConfig } from './types';
 
 export function activate(context: vscode.ExtensionContext): void {
   logger.log('GitComAI extension activated');
 
   const gitService = new GitService();
-  const anthropicService = new AnthropicService();
+  const aiService = new AIService();
   const uiHandler = new UIHandler();
 
   const disposable = vscode.commands.registerCommand(
@@ -16,24 +18,59 @@ export function activate(context: vscode.ExtensionContext): void {
     async () => {
       logger.log('Command gitcomai.generateCommitMessage executed');
 
-      const apiKey = vscode.workspace
-        .getConfiguration('gitcomai')
-        .get<string>('anthropicApiKey');
-      if (!apiKey) {
-        logger.warn('Anthropic API key not configured');
-        const setApiKey = 'Set API Key';
+      const config = vscode.workspace.getConfiguration('gitcomai');
+      const modelConfig: IModelConfig | undefined = config.get('selectedModel');
+
+      if (!modelConfig) {
+        logger.warn('No AI model selected');
+        const configureModel = 'Configure Model';
         const result = await vscode.window.showErrorMessage(
-          'Anthropic API key not configured. Please set it in the extension settings.',
-          setApiKey
+          'No AI model selected. Please configure a model in the extension settings.',
+          configureModel
         );
 
-        if (result === setApiKey) {
+        if (result === configureModel) {
           vscode.commands.executeCommand(
             'workbench.action.openSettings',
-            'gitcomai.anthropicApiKey'
+            'gitcomai.selectedModel'
           );
         }
         return;
+      }
+
+      const provider = modelConfig.provider;
+      const apiKeyConfig = `${provider}ApiKey`;
+      const apiKey = config.get<string>(apiKeyConfig);
+
+      if (provider !== 'ollama') {
+        if (!apiKey) {
+          const setApiKey = 'Set API Key';
+          const result = await vscode.window.showWarningMessage(
+            `${provider} API key not configured. You need to set it before using this provider.`,
+            setApiKey
+          );
+
+          if (result === setApiKey) {
+            vscode.commands.executeCommand(
+              'workbench.action.openSettings',
+              `gitcomai.${provider}ApiKey`
+            );
+          }
+          return;
+        }
+      } else {
+        try {
+          const baseURL =
+            vscode.workspace
+              .getConfiguration('gitcomai')
+              .get<string>('ollamaBaseURL') || 'http://localhost:11434/api';
+
+          vscode.window.showInformationMessage(
+            `Ollama will use the local server at ${baseURL}. Make sure Ollama is running.`
+          );
+        } catch (error) {
+          logger.error('Error checking Ollama configuration', error);
+        }
       }
 
       vscode.window.withProgress(
@@ -56,9 +93,9 @@ export function activate(context: vscode.ExtensionContext): void {
           logger.log(`Found ${stagedFiles.length} staged files`);
 
           progress.report({ increment: 30, message: 'Analyzing changes...' });
-          logger.log('Generating commit message with Anthropic API');
+          logger.log(`Generating commit message with ${provider} API`);
 
-          const commitMessage = await anthropicService.generateCommitMessage(
+          const commitMessage = await aiService.generateCommitMessage(
             gitDiff.diff,
             stagedFiles
           );
@@ -74,6 +111,7 @@ export function activate(context: vscode.ExtensionContext): void {
           logger.log('Commit message generated successfully');
 
           const formattedMessage = uiHandler.formatCommitMessage(commitMessage);
+
           const gitExtension =
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             vscode.extensions.getExtension<any>('vscode.git')?.exports;
@@ -105,8 +143,104 @@ export function activate(context: vscode.ExtensionContext): void {
       );
     }
   );
-
   context.subscriptions.push(disposable);
+
+  const selectModelCommand = vscode.commands.registerCommand(
+    'gitcomai.selectModel',
+    async () => {
+      logger.log('Command gitcomai.selectModel executed');
+
+      const providerOptions = [
+        { label: 'Anthropic (Claude)', value: 'anthropic' },
+        { label: 'OpenAI (GPT)', value: 'openai' },
+        { label: 'Mistral AI', value: 'mistral' },
+        { label: 'Ollama (Local Models)', value: 'ollama' },
+      ];
+
+      const selectedProvider = await vscode.window.showQuickPick(
+        providerOptions.map((option) => ({
+          label: option.label,
+          value: option.value,
+        })),
+        {
+          placeHolder: 'Select AI provider',
+          title: 'Select AI Provider',
+        }
+      );
+
+      if (!selectedProvider) {
+        return;
+      }
+
+      const provider = selectedProvider.value;
+
+      if (provider !== 'ollama') {
+        const apiKey = vscode.workspace
+          .getConfiguration('gitcomai')
+          .get<string>(`${provider}ApiKey`);
+        if (!apiKey) {
+          const setApiKey = 'Set API Key';
+          const result = await vscode.window.showWarningMessage(
+            `${provider} API key not configured. You need to set it before using this provider.`,
+            setApiKey
+          );
+
+          if (result === setApiKey) {
+            vscode.commands.executeCommand(
+              'workbench.action.openSettings',
+              `gitcomai.${provider}ApiKey`
+            );
+          }
+          return;
+        }
+      } else {
+        try {
+          const baseURL =
+            vscode.workspace
+              .getConfiguration('gitcomai')
+              .get<string>('ollamaBaseURL') || 'http://localhost:11434/api';
+
+          vscode.window.showInformationMessage(
+            `Ollama will use the local server at ${baseURL}. Make sure Ollama is running.`
+          );
+        } catch (error) {
+          logger.error('Error checking Ollama configuration', error);
+        }
+      }
+
+      const modelOpts = modelOptions[provider];
+      const selectedModel = await vscode.window.showQuickPick(
+        modelOpts.map((option) => ({
+          label: option.label,
+          description: option.description,
+          value: option.value,
+        })),
+        {
+          placeHolder: 'Select AI model',
+          title: `Select ${selectedProvider.label} Model`,
+        }
+      );
+
+      if (!selectedModel) {
+        return;
+      }
+
+      await vscode.workspace.getConfiguration('gitcomai').update(
+        'selectedModel',
+        {
+          provider,
+          model: selectedModel.value,
+        },
+        vscode.ConfigurationTarget.Global
+      );
+
+      vscode.window.showInformationMessage(
+        `Model set to ${selectedModel.label} (${selectedProvider.label})`
+      );
+    }
+  );
+
+  context.subscriptions.push(selectModelCommand);
 }
 
 export function deactivate(): void {

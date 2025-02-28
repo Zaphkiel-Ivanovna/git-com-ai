@@ -39,7 +39,7 @@ export class UIHandler {
         }
 
         bodyLine += `: ${item.description}`;
-        formattedMessage += `\n${bodyLine}`;
+        formattedMessage += `${bodyLine}`;
       }
     }
 

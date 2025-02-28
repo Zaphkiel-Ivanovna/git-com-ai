@@ -1,7 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { logger } from './logger';
+import { logger } from '../logger';
 
 /**
  * Interface pour les prompts retournés

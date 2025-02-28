@@ -28,6 +28,7 @@ Craft a concise commit message that encapsulates all changes made, with an empha
 - Focus on conceptual alterations rather than exhaustive file details.
 - Mentioning changes to ES6 or Node imports and comments is FORBIDDEN.
 - All variable names MUST be between code string.
+- The description MUST NOT exceed 74 characters.
 
 ## Commit Message Structure
 
@@ -41,9 +42,10 @@ Craft a concise commit message that encapsulates all changes made, with an empha
 
 "
 <emoji> <type>(<optional scope>): <short description with 74 characters>
-* <emoji> <type>: <short description with 74 characters>
-* <emoji> <type>: <short description with 74 characters>
-"
+
+- <emoji> <type>: <short description with 74 characters>
+- <emoji> <type>: <short description with 74 characters>
+  "
 
 ## Examples to Strictly Follow
 
@@ -57,10 +59,11 @@ Craft a concise commit message that encapsulates all changes made, with an empha
 
 "
 🐛 fix(lang): Resolve language parsing error
-* ♻️ refactor: Improve function readability
-* 🔥 cleanup: Remove deprecated code segments
-* ✨ feat(ui): Enhance user interface design
-"
+
+- ♻️ refactor: Improve function readability
+- 🔥 cleanup: Remove deprecated code segments
+- ✨ feat(ui): Enhance user interface design
+  "
 
 ## Emoji Scopes
 
@@ -138,4 +141,3 @@ Use GitMoji convention to preface the commit. Here are some help to choose the r
 
 - Follow the order of importance from the Emoji Scopes list in the commit message body.
 - Internationalization changes are less important than bug fixes and should not be the main message.
-

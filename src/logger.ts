@@ -49,5 +49,4 @@ export class Logger {
   }
 }
 
-// Exporter une instance par défaut pour faciliter l'utilisation
 export const logger = Logger.getInstance();
