@@ -29,8 +29,6 @@ export class UIHandler {
     formattedMessage += `: ${message.description}`;
 
     if (message.body && message.body.length > 0) {
-      formattedMessage += '\n';
-
       for (const item of message.body) {
         let bodyLine = `* ${item.emoji} ${item.type}`;
 
@@ -39,7 +37,7 @@ export class UIHandler {
         }
 
         bodyLine += `: ${item.description}`;
-        formattedMessage += `${bodyLine}`;
+        formattedMessage += `\n${bodyLine}`;
       }
     }
 

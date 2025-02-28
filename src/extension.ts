@@ -4,7 +4,7 @@ import { AIService } from './ai/aiService';
 import { UIHandler } from './uiHandler';
 import { logger } from './logger';
 import { modelOptions } from './ai/modelConfig';
-import { IModelConfig } from './types';
+import { AIProvider, IModelConfig } from './types';
 
 export function activate(context: vscode.ExtensionContext): void {
   logger.log('GitComAI extension activated');
@@ -151,10 +151,10 @@ export function activate(context: vscode.ExtensionContext): void {
       logger.log('Command gitcomai.selectModel executed');
 
       const providerOptions = [
-        { label: 'Anthropic (Claude)', value: 'anthropic' },
-        { label: 'OpenAI (GPT)', value: 'openai' },
-        { label: 'Mistral AI', value: 'mistral' },
-        { label: 'Ollama (Local Models)', value: 'ollama' },
+        { label: 'Anthropic (Claude)', value: AIProvider.ANTHROPIC },
+        { label: 'OpenAI (GPT)', value: AIProvider.OPENAI },
+        { label: 'Mistral AI', value: AIProvider.MISTRAL },
+        { label: 'Ollama (Local Models)', value: AIProvider.OLLAMA },
       ];
 
       const selectedProvider = await vscode.window.showQuickPick(

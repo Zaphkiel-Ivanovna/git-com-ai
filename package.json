@@ -2,11 +2,12 @@
   "name": "gitcomai",
   "displayName": "GitCom-AI",
   "description": "Generate commit messages using AI based on git diff",
-  "version": "3.0.7",
+  "version": "0.0.1",
   "engines": {
     "vscode": "^1.95.0"
   },
   "publisher": "ZaphkielIvanovna",
+  "repository": "https://github.com/Zaphkiel-Ivanovna/git-com-ai",
   "categories": [
     "Other"
   ],
@@ -18,15 +19,15 @@
     "commands": [
       {
         "command": "gitcomai.generateCommitMessage",
-        "title": "Generate Commit Message with AI",
+        "title": "GitComAI: Generate Commit Message with AI",
         "icon": {
-          "light": "resources/light/commit-icon.svg",
-          "dark": "resources/dark/commit-icon.svg"
+          "light": "resources/light/ai-commit.svg",
+          "dark": "resources/dark/ai-commit.svg"
         }
       },
       {
         "command": "gitcomai.selectModel",
-        "title": "Select AI Model for Commit Messages"
+        "title": "GitComAI: Select AI Model for Commit Messages"
       }
     ],
     "menus": {
@@ -123,7 +124,7 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
-    "vsix": "vsce package"
+    "vsix": "mkdir -p build && vsce package -o build/gitcomai-${npm_package_version}.vsix"
   },
   "devDependencies": {
     "@types/glob": "^8.1.0",

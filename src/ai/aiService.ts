@@ -4,10 +4,15 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createMistral } from '@ai-sdk/mistral';
 import { createOllama } from 'ollama-ai-provider';
-import { ICommitBodyItem, ICommitMessage, IModelConfig } from '../types';
-import { loadCommitPrompt } from './promptLoader';
+import {
+  AIProvider,
+  ICommitBodyItem,
+  ICommitMessage,
+  IModelConfig,
+} from '../types';
 import { logger } from '../logger';
 import { commitMessageSchema } from '../commitSchema';
+import { loadCommitPrompt } from './promptLoader';
 
 export class AIService {
   private apiKeys: Record<string, string | undefined> = {
@@ -54,7 +59,7 @@ export class AIService {
     logger.debug(`Getting model instance for ${provider}/${model}`);
 
     switch (provider) {
-      case 'anthropic': {
+      case AIProvider.ANTHROPIC: {
         if (!this.apiKeys.anthropic) {
           throw new Error('Anthropic API key not configured');
         }
@@ -62,7 +67,7 @@ export class AIService {
         return { model, provider: anthropic };
       }
 
-      case 'openai': {
+      case AIProvider.OPENAI: {
         if (!this.apiKeys.openai) {
           throw new Error('OpenAI API key not configured');
         }
@@ -70,7 +75,7 @@ export class AIService {
         return { model, provider: openai };
       }
 
-      case 'mistral': {
+      case AIProvider.MISTRAL: {
         if (!this.apiKeys.mistral) {
           throw new Error('Mistral API key not configured');
         }
@@ -78,7 +83,7 @@ export class AIService {
         return { model, provider: mistral };
       }
 
-      case 'ollama': {
+      case AIProvider.OLLAMA: {
         const options = this.ollamaBaseURL
           ? { baseURL: this.ollamaBaseURL }
           : undefined;
@@ -101,7 +106,7 @@ export class AIService {
 
       const config = vscode.workspace.getConfiguration('gitcomai');
       const modelConfig: IModelConfig = config.get('selectedModel') || {
-        provider: 'anthropic',
+        provider: AIProvider.ANTHROPIC,
         model: 'claude-3-7-sonnet-latest',
       };
 
