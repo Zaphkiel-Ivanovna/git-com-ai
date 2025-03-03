@@ -7,7 +7,6 @@ export const commitBodyItemSchema = z.object({
   description: z.string().describe('A short description of this change'),
 });
 
-// Schéma pour le message de commit complet
 export const commitMessageSchema = z.object({
   emoji: z.string().describe('The emoji that represents the type of change'),
   type: z.string().describe('The type of change'),
