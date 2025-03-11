@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { GitService } from './services/git.service';
 import { AIService } from './services/ai.service';
-import { UIHandler } from './ui/ui.handler';
 import { Logger } from './utils/logger';
 import { AIProvider, IModelConfig } from './@types/types';
 
@@ -12,7 +11,6 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const gitService = new GitService();
   const aiService = new AIService();
-  const uiHandler = new UIHandler();
 
   const config = vscode.workspace.getConfiguration('gitcomai');
   const modelConfig: IModelConfig | undefined = config.get('selectedModel');
@@ -46,10 +44,9 @@ export function activate(context: vscode.ExtensionContext): void {
       vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
-          title: 'Working with Git...',
-          cancellable: false,
+          cancellable: true,
         },
-        async (progress) => {
+        async (progress, token) => {
           try {
             progress.report({ increment: 0, message: 'Getting git diff...' });
             logger.log('Getting git diff');
@@ -67,41 +64,26 @@ export function activate(context: vscode.ExtensionContext): void {
               increment: 30,
               message: 'Starting AI generation...',
             });
+
             logger.log(`Generating commit message with ${provider} API`);
 
             const commitMessage = await aiService.generateCommitMessage(
               gitDiff.diff,
-              stagedFiles
+              stagedFiles,
+              progress,
+              token
             );
 
             if (!commitMessage) {
               logger.error('Failed to generate commit message');
               return;
             }
-
-            progress.report({
-              increment: 100,
-              message: 'Commit message generated',
-            });
             logger.log('Commit message generation completed');
 
             return new Promise<void>((resolve) => {
               setTimeout(() => {
-                const copyToClipboard = 'Copy to Clipboard';
-                vscode.window
-                  .showInformationMessage(
-                    'Commit message has been generated',
-                    copyToClipboard
-                  )
-                  .then((userChoice) => {
-                    if (userChoice === copyToClipboard) {
-                      const formattedMessage =
-                        uiHandler.formatCommitMessage(commitMessage);
-                      uiHandler.copyToClipboard(formattedMessage);
-                    }
-                    resolve();
-                  });
-              }, 1000);
+                resolve();
+              }, 2000);
             });
           } catch (error) {
             logger.error('Error in commit message generation process', error);

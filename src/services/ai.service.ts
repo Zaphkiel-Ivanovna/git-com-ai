@@ -72,7 +72,10 @@ export class AIService {
         if (!this.apiKeys.openai) {
           throw new Error('OpenAI API key not configured');
         }
-        const openai = createOpenAI({ apiKey: this.apiKeys.openai });
+        const openai = createOpenAI({
+          apiKey: this.apiKeys.openai,
+          compatibility: 'strict',
+        });
         return { model, provider: openai };
       }
 
@@ -126,7 +129,9 @@ export class AIService {
 
   public async generateCommitMessage(
     diff: string,
-    files: string[]
+    files: string[],
+    progress: vscode.Progress<{ message?: string; increment?: number }>,
+    token: vscode.CancellationToken
   ): Promise<ICommitMessage | null> {
     try {
       this.reinitialize();
@@ -146,84 +151,105 @@ export class AIService {
 
         const gitInputBox = this.getGitInputBox();
 
-        return await vscode.window.withProgress(
-          {
-            location: vscode.ProgressLocation.Notification,
-            title: 'Generating commit message...',
-            cancellable: true,
-          },
-          async (progress, token) => {
-            let commitMessage: ICommitMessage = {
-              emoji: '',
-              type: '',
-              scope: '',
-              description: '',
-              body: [],
-            };
+        let commitMessage: ICommitMessage = {
+          emoji: '',
+          type: '',
+          scope: '',
+          description: '',
+          body: [],
+        };
 
-            const controller = new AbortController();
-            token.onCancellationRequested(() => {
-              controller.abort();
-              logger.debug('Commit generation cancelled by user');
+        const controller = new AbortController();
+        token.onCancellationRequested(() => {
+          controller.abort();
+          logger.debug('Commit generation cancelled by user');
+        });
+
+        try {
+          return new Promise<ICommitMessage | null>((resolve, reject) => {
+            const { partialObjectStream, warnings } = streamObject({
+              model: provider(model, { structuredOutputs: true }),
+              schema: commitMessageSchema,
+              prompt: `${prompts.systemPrompt}\n\n${prompts.userPrompt}`,
+              abortSignal: controller.signal,
+              onFinish: ({ usage, object }) => {
+                logger.debug(`Usage: ${JSON.stringify(usage)}`);
+
+                progress.report({
+                  message: `Commit usage: ${usage.totalTokens} tokens`,
+                  increment: 100,
+                });
+
+                if (object && gitInputBox) {
+                  const finalFormattedMessage =
+                    this.uiHandler.formatCommitMessage(object);
+                  gitInputBox.value = finalFormattedMessage;
+                }
+
+                logger.debug(
+                  `Generated commit message: ${JSON.stringify(object)}`
+                );
+
+                resolve(object || null);
+              },
             });
 
-            try {
-              const { partialObjectStream } = streamObject({
-                model: provider(model, { structuredOutputs: true }),
-                schema: commitMessageSchema,
-                prompt: `${prompts.systemPrompt}\n\n${prompts.userPrompt}`,
-                abortSignal: controller.signal,
-              });
+            (async () => {
+              try {
+                for await (const chunk of partialObjectStream) {
+                  if (chunk) {
+                    commitMessage = {
+                      emoji: chunk.emoji || commitMessage.emoji,
+                      type: chunk.type || commitMessage.type,
+                      scope: chunk.scope || commitMessage.scope,
+                      description:
+                        chunk.description || commitMessage.description,
+                      body:
+                        (chunk.body as ICommitBodyItem[] | undefined) ||
+                        commitMessage.body,
+                    };
 
-              for await (const chunk of partialObjectStream) {
-                if (chunk) {
-                  commitMessage = {
-                    emoji: chunk.emoji || commitMessage.emoji,
-                    type: chunk.type || commitMessage.type,
-                    scope: chunk.scope || commitMessage.scope,
-                    description: chunk.description || commitMessage.description,
-                    body:
-                      (chunk.body as ICommitBodyItem[] | undefined) ||
-                      commitMessage.body,
-                  };
+                    const formattedMessage =
+                      this.formatPartialCommitMessage(commitMessage);
 
-                  const formattedMessage =
-                    this.formatPartialCommitMessage(commitMessage);
+                    if (gitInputBox) {
+                      gitInputBox.value = formattedMessage;
+                    }
 
-                  if (gitInputBox) {
-                    gitInputBox.value = formattedMessage;
+                    progress.report({
+                      message: formattedMessage,
+                      increment: 1,
+                    });
+
+                    logger.debug(
+                      `Stream chunk received: ${JSON.stringify(chunk)}`
+                    );
                   }
+                }
 
-                  progress.report({
-                    message: formattedMessage,
-                    increment: 1,
-                  });
-
-                  logger.debug(
-                    `Stream chunk received: ${JSON.stringify(chunk)}`
+                const generationWarnings = await warnings;
+                if (generationWarnings) {
+                  logger.warn(
+                    `Warnings: ${JSON.stringify(generationWarnings)}`
                   );
                 }
+              } catch (error) {
+                if (controller.signal.aborted) {
+                  logger.debug('Stream was aborted');
+                  resolve(null);
+                } else {
+                  reject(error);
+                }
               }
-
-              if (gitInputBox && commitMessage.emoji) {
-                const finalFormattedMessage =
-                  this.uiHandler.formatCommitMessage(commitMessage);
-                gitInputBox.value = finalFormattedMessage;
-              }
-
-              logger.debug(
-                `Generated commit message: ${JSON.stringify(commitMessage)}`
-              );
-              return commitMessage;
-            } catch (error) {
-              if (controller.signal.aborted) {
-                logger.debug('Stream was aborted');
-                return null;
-              }
-              throw error;
-            }
+            })();
+          });
+        } catch (error) {
+          if (controller.signal.aborted) {
+            logger.debug('Stream was aborted');
+            return null;
           }
-        );
+          throw error;
+        }
       } catch (error) {
         logger.error('Error generating commit message with AI SDK', error);
         throw error;
@@ -259,7 +285,7 @@ export class AIService {
     }
 
     if (message.body && message.body.length > 0) {
-      result += '\n\n';
+      result += '\n';
 
       for (const item of message.body) {
         let bodyLine = '* ';

@@ -28,6 +28,7 @@ export enum OpenAIModel {
   GPT_4_TURBO = 'gpt-4-turbo',
   GPT_4 = 'gpt-4',
   GPT_3_5_TURBO = 'gpt-3.5-turbo',
+  O3_MINI = 'o3-mini',
 }
 
 /**

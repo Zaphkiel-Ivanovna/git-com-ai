@@ -50,6 +50,11 @@ export const modelOptions: Record<string, IModelOption[]> = {
       value: OpenAIModel.GPT_3_5_TURBO,
       description: 'Fast and cost-effective model',
     },
+    {
+      label: 'O3 Mini',
+      value: OpenAIModel.O3_MINI,
+      description: 'Fast, flexible, intelligent reasoning model',
+    },
   ],
   mistral: [
     {

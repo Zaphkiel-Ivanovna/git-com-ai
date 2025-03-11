@@ -2,7 +2,7 @@
   "name": "gitcomai",
   "displayName": "GitCom-AI",
   "description": "Generate commit messages using AI based on git diff",
-  "version": "0.0.6",
+  "version": "0.0.24",
   "engines": {
     "vscode": "^1.95.0"
   },
@@ -143,10 +143,10 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^1.1.11",
-    "@ai-sdk/mistral": "^1.1.13",
-    "@ai-sdk/openai": "^1.1.15",
-    "ai": "^4.1.46",
+    "@ai-sdk/anthropic": "^1.1.15",
+    "@ai-sdk/mistral": "^1.1.15",
+    "@ai-sdk/openai": "^1.2.1",
+    "ai": "^4.1.54",
     "ollama-ai-provider": "^1.2.0"
   }
 }
