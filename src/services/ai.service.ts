@@ -27,6 +27,14 @@ export class AIService {
     this.loadApiKeys();
     this.loadOllamaConfig();
     this.uiHandler = new UIHandler();
+
+    // Ajouter un écouteur pour les changements de configuration
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration('gitcomai')) {
+        logger.debug('Configuration changed, reloading AI service');
+        this.reinitialize();
+      }
+    });
   }
 
   private loadApiKeys(): void {

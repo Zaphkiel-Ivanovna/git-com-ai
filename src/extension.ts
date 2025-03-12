@@ -3,6 +3,7 @@ import { GitService } from './services/git.service';
 import { AIService } from './services/ai.service';
 import { Logger } from './utils/logger';
 import { AIProvider, IModelConfig } from './@types/types';
+import { ConfigView } from './ui/config-view';
 
 const logger = Logger.getInstance();
 
@@ -11,12 +12,13 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const gitService = new GitService();
   const aiService = new AIService();
+  const configView = new ConfigView(context);
 
   const config = vscode.workspace.getConfiguration('gitcomai');
   const modelConfig: IModelConfig | undefined = config.get('selectedModel');
   const provider = modelConfig?.provider || AIProvider.ANTHROPIC;
 
-  const disposable = vscode.commands.registerCommand(
+  const generateCommitMessageCmd = vscode.commands.registerCommand(
     'gitcomai.generateCommitMessage',
     async () => {
       logger.log('Command gitcomai.generateCommitMessage executed');
@@ -98,12 +100,34 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   );
 
-  context.subscriptions.push(disposable);
-  context.subscriptions.push(
-    vscode.commands.registerCommand('gitcomai.showLogs', () => {
+  // Commande pour afficher les logs
+  const showLogsCmd = vscode.commands.registerCommand(
+    'gitcomai.showLogs',
+    () => {
       logger.show();
-    })
+    }
   );
+
+  // Nouvelle commande pour ouvrir la page de configuration
+  const openConfigCmd = vscode.commands.registerCommand(
+    'gitcomai.openConfig',
+    () => {
+      configView.show();
+    }
+  );
+
+  // Commande pour sélectionner un modèle (peut rediriger vers la page de configuration)
+  const selectModelCmd = vscode.commands.registerCommand(
+    'gitcomai.selectModel',
+    () => {
+      configView.show();
+    }
+  );
+
+  context.subscriptions.push(generateCommitMessageCmd);
+  context.subscriptions.push(showLogsCmd);
+  context.subscriptions.push(openConfigCmd);
+  context.subscriptions.push(selectModelCmd);
 }
 
 export function deactivate(): void {

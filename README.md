@@ -1,6 +1,6 @@
 # GitComAI - AI-Powered Git Commit Messages
 
-![GitComAI Logo](https://via.placeholder.com/200x60?text=GitComAI)
+![Logo](images/logo_full.png)
 
 GitComAI is a VSCode extension that automatically generates meaningful Git commit messages by analyzing your code changes (git diff) using Anthropic's Claude AI technology. The extension follows the GitMoji and Conventional Commits specifications to create clear, informative commit messages.
 

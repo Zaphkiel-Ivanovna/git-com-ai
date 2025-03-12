@@ -2,12 +2,13 @@
   "name": "gitcomai",
   "displayName": "GitCom-AI",
   "description": "Generate commit messages using AI based on git diff",
-  "version": "0.0.24",
+  "version": "1.0.1",
   "engines": {
     "vscode": "^1.95.0"
   },
   "publisher": "ZaphkielIvanovna",
   "repository": "https://github.com/Zaphkiel-Ivanovna/git-com-ai",
+  "icon": "images/logo.png",
   "categories": [
     "Other"
   ],
@@ -28,6 +29,14 @@
       {
         "command": "gitcomai.selectModel",
         "title": "GitComAI: Select AI Model for Commit Messages"
+      },
+      {
+        "command": "gitcomai.openConfig",
+        "title": "GitComAI: Open Configuration"
+      },
+      {
+        "command": "gitcomai.showLogs",
+        "title": "GitComAI: Show Logs"
       }
     ],
     "menus": {
@@ -43,6 +52,12 @@
           "command": "gitcomai.generateCommitMessage",
           "when": "scmProvider == git",
           "group": "inline"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "gitcomai.openConfig",
+          "when": "true"
         }
       ]
     },
