@@ -4,3 +4,9 @@ dist
 node_modules
 .vscode-test/
 *.vsix
+.DS_Store
+*.log
+*.tmp
+*.tmp.*
+*.swp
+*.swo

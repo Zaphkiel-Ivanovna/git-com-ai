@@ -38,6 +38,7 @@ export enum MistralModel {
   MISTRAL_LARGE = 'mistral-large-latest',
   MISTRAL_MEDIUM = 'mistral-medium-latest',
   MISTRAL_SMALL = 'mistral-small-latest',
+  
 }
 
 /**

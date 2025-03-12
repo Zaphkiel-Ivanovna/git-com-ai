@@ -305,6 +305,9 @@ export class ConfigView {
                     <option value="gpt-3.5-turbo" ${
                       modelConfig.model === 'gpt-3.5-turbo' ? 'selected' : ''
                     }>GPT-3.5 Turbo</option>
+                    <option value="o3-mini" ${
+                      modelConfig.model === 'o3-mini' ? 'selected' : ''
+                    }>O3 Mini</option>
                 </select>
             </div>
             <div class="form-group">
@@ -337,6 +340,9 @@ export class ConfigView {
                         ? 'selected'
                         : ''
                     }>Mistral Small</option>
+                    <option value="codestral-latest" ${
+                      modelConfig.model === 'codestral-latest' ? 'selected' : ''
+                    }>Codestral</option>
                 </select>
             </div>
             <div class="form-group">
