@@ -1,19 +1,17 @@
 <div id="mistral-section" class="model-section card {{#if isMistralSelected}}active{{/if}}">
     <div class="card-header">
-        <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-            <polyline points="3.29 7 12 12 20.71 7"></polyline>
-            <line x1="12" y1="22" x2="12" y2="12"></line>
+        <svg class="card-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19.1899 0H24V24H19.1899V0Z" fill="currentColor"/>
+            <path d="M0 0H4.81013V24H0V0Z" fill="currentColor"/>
+            <path d="M4.81013 4.77966H9.62025V14.3898H4.81013V4.77966Z" fill="currentColor"/>
+            <path d="M14.3797 4.77966H19.1899V14.3898H14.3797V4.77966Z" fill="currentColor"/>
+            <path d="M9.62025 9.55932H14.4304V19.1695H9.62025V9.55932Z" fill="currentColor"/>
         </svg>
+
         <h2 class="card-title">Mistral Configuration</h2>
     </div>
     <div class="form-group">
-        <label for="mistral-model">Model:</label>
-        <select id="mistral-model">
-            {{#each mistralModels}}
-                <option value="{{this}}" {{#if (eq ../modelConfig.model this)}}selected{{/if}}>{{this}}</option>
-            {{/each}}
-        </select>
+         {{> model-selector mistralModelSelector}}
     </div>
     <div class="form-group">
         <label for="mistral-api-key">API Key:</label>

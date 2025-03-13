@@ -36,92 +36,130 @@ export enum MistralModel {
   MINISTRAL_3B = 'ministral-3b-latest',
 }
 
-export interface IModelPricing {
-  input: number;
-  output: number;
+export interface IModelDetails {
+  title: string;
+  description: string;
+  inputPrice: number; // Price per 1M tokens for input
+  outputPrice: number; // Price per 1M tokens for output
 }
 
 export type AIModel = OpenAIModel | AnthropicModel | MistralModel;
 
-export const OPENAI_PRICING: Record<OpenAIModel, IModelPricing> = {
+export const OPENAI_MODEL_DETAILS: Record<OpenAIModel, IModelDetails> = {
   [OpenAIModel.GPT_45_PREVIEW]: {
-    input: 75.0,
-    output: 150.0,
+    title: 'GPT-4.5 Preview',
+    description:
+      "OpenAI's most advanced model with enhanced reasoning capabilities",
+    inputPrice: 75.0,
+    outputPrice: 150.0,
   },
   [OpenAIModel.GPT_4O]: {
-    input: 2.5,
-    output: 10.0,
+    title: 'GPT-4o',
+    description: 'Multimodal model with strong reasoning and coding abilities',
+    inputPrice: 2.5,
+    outputPrice: 10.0,
   },
   [OpenAIModel.GPT_4O_MINI]: {
-    input: 0.15,
-    output: 0.6,
+    title: 'GPT-4o Mini',
+    description: 'Smaller, faster version of GPT-4o with good performance',
+    inputPrice: 0.15,
+    outputPrice: 0.6,
   },
   [OpenAIModel.O1]: {
-    input: 15.0,
-    output: 60.0,
+    title: 'o1',
+    description: "OpenAI's most powerful reasoning model",
+    inputPrice: 15.0,
+    outputPrice: 60.0,
   },
   [OpenAIModel.O3_MINI]: {
-    input: 1.1,
-    output: 4.4,
+    title: 'o3-mini',
+    description: 'Compact multimodal model with good performance',
+    inputPrice: 1.1,
+    outputPrice: 4.4,
   },
   [OpenAIModel.O1_MINI]: {
-    input: 1.1,
-    output: 4.4,
+    title: 'o1-mini',
+    description: 'Smaller version of o1 with efficient reasoning capabilities',
+    inputPrice: 1.1,
+    outputPrice: 4.4,
   },
 };
 
-export const ANTHROPIC_PRICING: Record<AnthropicModel, IModelPricing> = {
+export const ANTHROPIC_MODEL_DETAILS: Record<AnthropicModel, IModelDetails> = {
   [AnthropicModel.CLAUDE_3_7_SONNET]: {
-    input: 3.0,
-    output: 15.0,
+    title: 'Claude 3.7 Sonnet',
+    description:
+      'Latest Sonnet model with enhanced reasoning and coding abilities',
+    inputPrice: 3.0,
+    outputPrice: 15.0,
   },
   [AnthropicModel.CLAUDE_3_5_HAIKU]: {
-    input: 0.8,
-    output: 4.0,
+    title: 'Claude 3.5 Haiku',
+    description: 'Fast and efficient model for everyday tasks',
+    inputPrice: 0.8,
+    outputPrice: 4.0,
   },
   [AnthropicModel.CLAUDE_3_OPUS]: {
-    input: 15.0,
-    output: 75.0,
+    title: 'Claude 3 Opus',
+    description: "Anthropic's most powerful model for complex reasoning",
+    inputPrice: 15.0,
+    outputPrice: 75.0,
   },
   [AnthropicModel.CLAUDE_3_5_SONNET]: {
-    input: 3.0,
-    output: 15.0,
+    title: 'Claude 3.5 Sonnet',
+    description: 'Balanced model with strong reasoning capabilities',
+    inputPrice: 3.0,
+    outputPrice: 15.0,
   },
   [AnthropicModel.CLAUDE_3_SONNET]: {
-    input: 3.0,
-    output: 15.0,
+    title: 'Claude 3 Sonnet',
+    description: 'Versatile model for a wide range of tasks',
+    inputPrice: 3.0,
+    outputPrice: 15.0,
   },
   [AnthropicModel.CLAUDE_3_HAIKU]: {
-    input: 0.25,
-    output: 1.25,
+    title: 'Claude 3 Haiku',
+    description: 'Fast and cost-effective model for simpler tasks',
+    inputPrice: 0.25,
+    outputPrice: 1.25,
   },
 };
 
-export const MISTRAL_PRICING: Record<MistralModel, IModelPricing> = {
+export const MISTRAL_MODEL_DETAILS: Record<MistralModel, IModelDetails> = {
   [MistralModel.MISTRAL_LARGE]: {
-    input: 2.0,
-    output: 6.0,
+    title: 'Mistral Large',
+    description: "Mistral's most powerful model for complex tasks",
+    inputPrice: 2.0,
+    outputPrice: 6.0,
   },
   [MistralModel.MISTRAL_SMALL]: {
-    input: 0.1,
-    output: 0.3,
+    title: 'Mistral Small',
+    description: 'Efficient model for everyday tasks',
+    inputPrice: 0.1,
+    outputPrice: 0.3,
   },
   [MistralModel.CODESTRAL]: {
-    input: 0.3,
-    output: 0.9,
+    title: 'Codestral',
+    description: 'Specialized model for code generation and understanding',
+    inputPrice: 0.3,
+    outputPrice: 0.9,
   },
   [MistralModel.MINISTRAL_8B]: {
-    input: 0.1,
-    output: 0.1,
+    title: 'Ministral 8B',
+    description: 'Compact 8B parameter model with good performance',
+    inputPrice: 0.1,
+    outputPrice: 0.1,
   },
   [MistralModel.MINISTRAL_3B]: {
-    input: 0.04,
-    output: 0.04,
+    title: 'Ministral 3B',
+    description: 'Lightweight 3B parameter model for simple tasks',
+    inputPrice: 0.04,
+    outputPrice: 0.04,
   },
 };
 
-export const ALL_MODEL_PRICING: Record<string, IModelPricing> = {
-  ...OPENAI_PRICING,
-  ...ANTHROPIC_PRICING,
-  ...MISTRAL_PRICING,
+export const ALL_MODEL_DETAILS: Record<string, IModelDetails> = {
+  ...OPENAI_MODEL_DETAILS,
+  ...ANTHROPIC_MODEL_DETAILS,
+  ...MISTRAL_MODEL_DETAILS,
 };

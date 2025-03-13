@@ -10,6 +10,9 @@ import {
   AnthropicModel,
   MistralModel,
   OpenAIModel,
+  ANTHROPIC_MODEL_DETAILS,
+  MISTRAL_MODEL_DETAILS,
+  OPENAI_MODEL_DETAILS,
 } from '../@types/model.types';
 import { IOllamaTagsResponse, IOllamaModel } from '../@types/ollama.types';
 
@@ -239,18 +242,68 @@ export class ConfigView {
       const template = fs.readFileSync(templatePath, 'utf8');
       const compiledTemplate = Handlebars.compile(template);
 
+      const cssPath = path.join(
+        this.context.extensionPath,
+        'resources',
+        'templates',
+        'css',
+        'styles.css'
+      );
+      const cssContent = fs.readFileSync(cssPath, 'utf8');
+
       const config = vscode.workspace.getConfiguration('gitcomai');
       const modelConfig = config.get<IModelConfig>('selectedModel') || {
         provider: AIProvider.ANTHROPIC,
         model: AnthropicModel.CLAUDE_3_SONNET,
       };
 
-      // Get all enum values to pass to the template
-      const openAIModels = Object.values(OpenAIModel);
-      const anthropicModels = Object.values(AnthropicModel);
-      const mistralModels = Object.values(MistralModel);
+      const anthropicModelOptions = Object.keys(AnthropicModel).map((key) => {
+        const modelValue = AnthropicModel[key as keyof typeof AnthropicModel];
+        const modelDetails = ANTHROPIC_MODEL_DETAILS[modelValue];
+        return {
+          value: modelValue,
+          title: modelDetails.title,
+          description: modelDetails.description,
+          inputPrice: modelDetails.inputPrice,
+          outputPrice: modelDetails.outputPrice,
+          provider: AIProvider.ANTHROPIC,
+          selected: modelConfig.model === modelValue,
+        };
+      });
+
+      // Préparation des données pour les modèles OpenAI
+      const openaiModelOptions = Object.keys(OpenAIModel).map((key) => {
+        const modelValue = OpenAIModel[key as keyof typeof OpenAIModel];
+        const modelDetails = OPENAI_MODEL_DETAILS[modelValue];
+        return {
+          value: modelValue,
+          title: modelDetails.title,
+          description: modelDetails.description,
+          inputPrice: modelDetails.inputPrice,
+          outputPrice: modelDetails.outputPrice,
+          provider: AIProvider.OPENAI,
+          selected: modelConfig.model === modelValue,
+        };
+      });
+
+      // Préparation des données pour les modèles Mistral
+      const mistralModelOptions = Object.keys(MistralModel).map((key) => {
+        const modelValue = MistralModel[key as keyof typeof MistralModel];
+        const modelDetails = MISTRAL_MODEL_DETAILS[modelValue];
+        return {
+          value: modelValue,
+          title: modelDetails.title,
+          description: modelDetails.description,
+          inputPrice: modelDetails.inputPrice,
+          outputPrice: modelDetails.outputPrice,
+          provider: AIProvider.MISTRAL,
+          selected: modelConfig.model === modelValue,
+        };
+      });
 
       return compiledTemplate({
+        cssContent,
+
         modelConfig,
 
         isAnthropicSelected: modelConfig.provider === 'anthropic',
@@ -258,9 +311,27 @@ export class ConfigView {
         isMistralSelected: modelConfig.provider === 'mistral',
         isOllamaSelected: modelConfig.provider === 'ollama',
 
-        openAIModels,
-        anthropicModels,
-        mistralModels,
+        anthropicModelSelector: {
+          id: 'anthropic-model',
+          name: 'anthropic-model',
+          label: 'Model:',
+          selectedProvider: AIProvider.ANTHROPIC,
+          options: anthropicModelOptions,
+        },
+        openaiModelSelector: {
+          id: 'openai-model',
+          name: 'openai-model',
+          label: 'Model:',
+          selectedProvider: AIProvider.OPENAI,
+          options: openaiModelOptions,
+        },
+        mistralModelSelector: {
+          id: 'mistral-model',
+          name: 'mistral-model',
+          label: 'Model:',
+          selectedProvider: AIProvider.MISTRAL,
+          options: mistralModelOptions,
+        },
 
         anthropicApiKey: config.get<string>('anthropicApiKey') || '',
         openaiApiKey: config.get<string>('openaiApiKey') || '',
