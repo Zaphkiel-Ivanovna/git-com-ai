@@ -11,12 +11,12 @@ export interface IModelConfig {
 }
 
 export enum OpenAIModel {
-  GPT_45_PREVIEW = 'gpt-4.5-preview',
   GPT_4O = 'gpt-4o',
   GPT_4O_MINI = 'gpt-4o-mini',
   O1 = 'o1',
   O3_MINI = 'o3-mini',
   O1_MINI = 'o1-mini',
+  GPT_45_PREVIEW = 'gpt-4.5-preview',
 }
 
 export enum AnthropicModel {

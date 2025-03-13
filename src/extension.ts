@@ -107,7 +107,6 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     );
 
-    // Nouvelle commande pour ouvrir la page de configuration
     const openConfigCmd = vscode.commands.registerCommand(
       'gitcomai.openConfig',
       () => {

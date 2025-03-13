@@ -157,66 +157,55 @@
 </style>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Initialize all custom selects
+  document.addEventListener('DOMContentLoaded', function() {    
     document.querySelectorAll('.custom-select-container').forEach(container => {
       const selectId = container.querySelector('.hidden-select').id;
       const header = container.querySelector('.select-header');
       const options = container.querySelector('.select-options');
       const hiddenSelect = container.querySelector('.hidden-select');
       const selectedText = container.querySelector('.selected-option-text');
-      
-      // Set initial selected text
+            
       const initialSelected = hiddenSelect.options[hiddenSelect.selectedIndex];
       if (initialSelected) {
         selectedText.textContent = initialSelected.textContent;
       }
-      
-      // Toggle dropdown on header click
+            
       header.addEventListener('click', function() {
         const isOpen = options.classList.contains('open');
-        
-        // Close all other dropdowns
+                
         document.querySelectorAll('.select-options.open').forEach(el => {
           if (el !== options) {
             el.classList.remove('open');
             el.closest('.custom-select-container').querySelector('.select-header').classList.remove('open');
           }
         });
-        
-        // Toggle current dropdown
+                
         header.classList.toggle('open');
         options.classList.toggle('open');
       });
-      
-      // Handle option selection
+            
       container.querySelectorAll('.select-option').forEach(option => {
         option.addEventListener('click', function() {
           const value = this.dataset.value;
           const title = this.querySelector('.option-title').textContent;
-          
-          // Update hidden select
+                    
           for (let i = 0; i < hiddenSelect.options.length; i++) {
             if (hiddenSelect.options[i].value === value) {
               hiddenSelect.selectedIndex = i;
               break;
             }
           }
-          
-          // Update displayed text
+                    
           selectedText.textContent = title;
-          
-          // Close dropdown
+                    
           header.classList.remove('open');
           options.classList.remove('open');
-          
-          // Trigger change event on the hidden select
+                    
           const event = new Event('change', { bubbles: true });
           hiddenSelect.dispatchEvent(event);
         });
       });
-      
-      // Close dropdown when clicking outside
+            
       document.addEventListener('click', function(e) {
         if (!container.contains(e.target)) {
           header.classList.remove('open');

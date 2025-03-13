@@ -78,7 +78,6 @@ export class ConfigView {
   private async saveConfig(config: any): Promise<void> {
     const configuration = vscode.workspace.getConfiguration('gitcomai');
 
-    // Save model configuration
     await configuration.update(
       'selectedModel',
       {
@@ -88,7 +87,6 @@ export class ConfigView {
       vscode.ConfigurationTarget.Global
     );
 
-    // Save API keys
     await configuration.update(
       'anthropicApiKey',
       config.anthropicApiKey,
@@ -110,7 +108,6 @@ export class ConfigView {
       vscode.ConfigurationTarget.Global
     );
 
-    // Save other parameters
     await configuration.update(
       'temperature',
       config.temperature,
@@ -141,7 +138,7 @@ export class ConfigView {
     });
 
     if (!modelName) {
-      return; // User cancelled
+      return;
     }
 
     const config = vscode.workspace.getConfiguration('gitcomai');
@@ -155,7 +152,6 @@ export class ConfigView {
         status: 'started',
       });
 
-      // Show progress notification
       await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
@@ -170,7 +166,6 @@ export class ConfigView {
 
           const pullUrl = `${apiUrl}/pull`;
 
-          // Start the pull operation with streaming response
           const response = await fetch(pullUrl, {
             method: 'POST',
             headers: {
@@ -183,7 +178,6 @@ export class ConfigView {
             throw new Error(`Failed to pull model: ${response.statusText}`);
           }
 
-          // Process the streaming response
           const reader = response.body?.getReader();
           if (!reader) {
             throw new Error('Failed to get response reader');
@@ -195,17 +189,14 @@ export class ConfigView {
           let lastStatus = '';
           let done = false;
 
-          // Utiliser une boucle avec condition explicite
           while (!done) {
             const result = await reader.read();
             done = result.done;
 
-            // Si la lecture est terminée, sortir de la boucle
             if (done) {
               break;
             }
 
-            // Traiter les données reçues
             const chunk = decoder.decode(result.value, { stream: true });
             const lines = chunk.split('\n').filter((line) => line.trim());
 
@@ -225,13 +216,12 @@ export class ConfigView {
                   downloadedSize = parseInt(data.completed, 10);
                 }
 
-                // Calculer le pourcentage de progression
                 let progressMessage = lastStatus;
                 let progressPercent = 0;
 
                 if (totalSize > 0 && downloadedSize > 0) {
                   progressPercent = (downloadedSize / totalSize) * 100;
-                  // Utiliser formatSize au lieu de calculer manuellement les MB
+
                   const downloadedFormatted = formatSize(downloadedSize);
                   const totalFormatted = formatSize(totalSize);
                   progressMessage = `${lastStatus} - ${downloadedFormatted} / ${totalFormatted} (${progressPercent.toFixed(
@@ -239,14 +229,12 @@ export class ConfigView {
                   )}%)`;
                 }
 
-                // Mettre à jour la progression
                 progress.report({
                   increment:
                     progressPercent > 0 ? progressPercent / 100 : undefined,
                   message: progressMessage,
                 });
 
-                // Mettre à jour la webview avec la progression
                 this.panel?.webview.postMessage({
                   command: 'ollamaModelPullingProgress',
                   modelName,
@@ -260,7 +248,6 @@ export class ConfigView {
             }
           }
 
-          // Refresh the model list
           await this.fetchOllamaModels(ollamaBaseURL);
 
           this.panel?.webview.postMessage({
@@ -365,8 +352,6 @@ export class ConfigView {
       const data = (await response.json()) as IOllamaTagsResponse;
 
       if (data && Array.isArray(data.models)) {
-        data.models.sort((a, b) => a.name.localeCompare(b.name));
-
         this.ollamaModels = data.models.map((model: IOllamaModel) => ({
           name: model.name,
           size: formatSize(model.size),
@@ -385,7 +370,6 @@ export class ConfigView {
           models: this.ollamaModels,
         });
 
-        // Save the base URL to configuration
         const configuration = vscode.workspace.getConfiguration('gitcomai');
         await configuration.update(
           'ollamaBaseURL',
@@ -453,7 +437,6 @@ export class ConfigView {
         };
       });
 
-      // Préparation des données pour les modèles OpenAI
       const openaiModelOptions = Object.keys(OpenAIModel).map((key) => {
         const modelValue = OpenAIModel[key as keyof typeof OpenAIModel];
         const modelDetails = OPENAI_MODEL_DETAILS[modelValue];
@@ -468,7 +451,6 @@ export class ConfigView {
         };
       });
 
-      // Préparation des données pour les modèles Mistral
       const mistralModelOptions = Object.keys(MistralModel).map((key) => {
         const modelValue = MistralModel[key as keyof typeof MistralModel];
         const modelDetails = MISTRAL_MODEL_DETAILS[modelValue];

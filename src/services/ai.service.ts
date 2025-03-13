@@ -18,6 +18,7 @@ import {
 } from '../@types/model.types';
 import { calculateCost } from '../utils/cost.util';
 import { formatCommitMessage } from '../utils/format.util';
+import { GitExtension, InputBox } from '../@types/git';
 
 export class AIService {
   private apiKeys: Record<string, string | undefined> = {
@@ -111,11 +112,10 @@ export class AIService {
     }
   }
 
-  private getGitInputBox(): vscode.InputBox | null {
+  private getGitInputBox(): InputBox | null {
     try {
       const gitExtension =
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        vscode.extensions.getExtension<any>('vscode.git')?.exports;
+        vscode.extensions.getExtension<GitExtension>('vscode.git')?.exports;
       if (!gitExtension) {
         logger.warn('Git extension not found');
         return null;

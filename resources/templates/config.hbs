@@ -148,20 +148,17 @@
     <script>
         (function() {
             const vscode = acquireVsCodeApi();
-            
-            // Tab navigation
+                        
             const tabs = document.querySelectorAll('.tab');
             const tabContents = document.querySelectorAll('.tab-content');
             
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => {
                     const tabId = tab.getAttribute('data-tab');
-                    
-                    // Update active tab
+                                        
                     tabs.forEach(t => t.classList.remove('active'));
                     tab.classList.add('active');
-                    
-                    // Update active content
+                                        
                     tabContents.forEach(content => {
                         content.classList.remove('active');
                         if (content.id === `${tabId}-tab`) {
@@ -170,8 +167,7 @@
                     });
                 });
             });
-            
-            // Provider selection
+                        
             const providerSelect = document.getElementById('provider');
             const sections = {
                 'anthropic': document.getElementById('anthropic-section'),
@@ -179,21 +175,17 @@
                 'mistral': document.getElementById('mistral-section'),
                 'ollama': document.getElementById('ollama-section')
             };
-            
-            // Show/hide sections based on provider selection
+                        
             providerSelect.addEventListener('change', () => {
                 const selectedProvider = providerSelect.value;
-                
-                // Hide all sections
+                                
                 Object.values(sections).forEach(section => {
                     section.classList.remove('active');
                 });
-                
-                // Show selected section
+                                
                 sections[selectedProvider].classList.add('active');
             });
-            
-            // Temperature slider and input sync
+                        
             const temperatureSlider = document.getElementById('temperature');
             const temperatureInput = document.getElementById('temperature-input');
             
@@ -208,8 +200,7 @@
                     temperatureSlider.value = value;
                 }
             });
-            
-            // Max tokens slider and input sync
+                        
             const maxTokensSlider = document.getElementById('max-tokens');
             const maxTokensInput = document.getElementById('max-tokens-input');
             
@@ -224,20 +215,17 @@
                     maxTokensSlider.value = value;
                 }
             });
-            
-            // Show logs link
+                        
             document.getElementById('show-logs-link').addEventListener('click', (e) => {
                 e.preventDefault();
                 vscode.postMessage({
                     command: 'showLogs'
                 });
             });
-            
-            // Save configuration
+                        
             document.getElementById('save-config').addEventListener('click', () => {
                 const provider = providerSelect.value;
-                
-                // Get model based on selected provider
+                                
                 let model;
                 switch (provider) {
                     case 'anthropic':
@@ -270,8 +258,7 @@
                     command: 'saveConfig',
                     config
                 });
-                
-                // Show saving feedback
+                                
                 const saveButton = document.getElementById('save-config');
                 const originalText = saveButton.innerHTML;
                 saveButton.innerHTML = `
@@ -291,14 +278,12 @@
             const paramSizeElement = document.getElementById('ollama-param-size');
             const quantizationElement = document.getElementById('ollama-quantization');
             const sizeElement = document.getElementById('ollama-size');
-            
-            // Update model details when selection changes
+                        
             if (ollamaModelSelect) {
                 ollamaModelSelect.addEventListener('change', function() {
                     const selectedOption = ollamaModelSelect.options[ollamaModelSelect.selectedIndex];
                     const modelName = selectedOption.value;
-                    
-                    // Find the selected model in the ollamaModels array
+                                        
                     const ollamaModels = {{{json ollamaModels}}};
                     const selectedModel = ollamaModels.find(model => model.name === modelName);
                     
@@ -309,22 +294,19 @@
                     }
                 });
             }
-            
-            // Connect button functionality
+                        
             const connectButton = document.getElementById('connect-ollama');
             const baseUrlInput = document.getElementById('ollama-base-url');
             
             if (connectButton && baseUrlInput) {
                 connectButton.addEventListener('click', function() {
                     const baseUrl = baseUrlInput.value.trim();
-                    if (baseUrl) {
-                        // Post message to extension to fetch models
+                    if (baseUrl) {                        
                         vscode.postMessage({
                             command: 'fetchOllamaModels',
                             baseUrl: baseUrl
                         });
-                        
-                        // Show loading status
+                                                
                         const statusElement = document.getElementById('ollama-models-status');
                         if (statusElement) {
                             statusElement.textContent = 'Connecting to Ollama server...';
@@ -334,8 +316,7 @@
                     }
                 });
             }
-            
-            // Pull model button functionality
+                        
             const pullModelButton = document.getElementById('pull-ollama-model');
             
             if (pullModelButton) {
@@ -345,8 +326,7 @@
                     });
                 });
             }
-            
-            // Refresh button functionality
+                        
             const refreshButton = document.getElementById('refresh-ollama-models');
             
             if (refreshButton && baseUrlInput) {
@@ -357,8 +337,7 @@
                             command: 'fetchOllamaModels',
                             baseUrl: baseUrl
                         });
-                        
-                        // Show loading status
+                                                
                         const statusElement = document.getElementById('ollama-models-status');
                         if (statusElement) {
                             statusElement.textContent = 'Refreshing model list...';
@@ -372,16 +351,14 @@
 
         window.addEventListener('message', event => {
             const message = event.data;
-            
-            // Gérer les messages de l'extension
+                        
             if (message.command === 'ollamaModelsLoaded') {
                 const statusElement = document.getElementById('ollama-models-status');
                 if (statusElement) {
                     if (message.success) {
                         statusElement.textContent = `Successfully loaded ${message.count} models`;
                         statusElement.className = 'status-message success';
-                        
-                        // Masquer le message après 3 secondes
+                                                
                         setTimeout(() => {
                             statusElement.style.display = 'none';
                         }, 3000);
@@ -402,8 +379,7 @@
                     } else if (message.status === 'completed') {
                         statusElement.textContent = `Successfully pulled model: ${message.modelName}`;
                         statusElement.className = 'status-message success';
-                        
-                        // Masquer le message après 5 secondes
+                                                
                         setTimeout(() => {
                             statusElement.style.display = 'none';
                         }, 5000);
@@ -420,8 +396,7 @@
                     statusElement.textContent = message.message;
                     statusElement.className = 'status-message info';
                     statusElement.style.display = 'block';
-                    
-                    // Optionnel : Ajouter une barre de progression
+                                        
                     let progressBar = document.getElementById('ollama-progress-bar');
                     if (!progressBar) {
                         progressBar = document.createElement('div');
