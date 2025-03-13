@@ -4,7 +4,13 @@ import * as fs from 'fs';
 import * as Handlebars from 'handlebars';
 import { logger } from '../utils/logger.util';
 import { formatSize } from '../utils/format.util';
-import { IModelConfig, AIProvider } from '../@types/model.types';
+import {
+  IModelConfig,
+  AIProvider,
+  AnthropicModel,
+  MistralModel,
+  OpenAIModel,
+} from '../@types/model.types';
 import { IOllamaTagsResponse, IOllamaModel } from '../@types/ollama.types';
 
 export class ConfigView {
@@ -222,38 +228,53 @@ export class ConfigView {
   }
 
   private getWebviewContent(): string {
-    const templatePath = path.join(
-      this.context.extensionPath,
-      'resources',
-      'templates',
-      'config.hbs'
-    );
-    const templateSource = fs.readFileSync(templatePath, 'utf8');
-    const template = Handlebars.compile(templateSource);
+    try {
+      const templatePath = path.join(
+        this.context.extensionPath,
+        'resources',
+        'templates',
+        'config.hbs'
+      );
 
-    const config = vscode.workspace.getConfiguration('gitcomai');
-    const modelConfig: IModelConfig = config.get('selectedModel') || {
-      provider: AIProvider.ANTHROPIC,
-      model: 'claude-3-7-sonnet-latest',
-    };
+      const template = fs.readFileSync(templatePath, 'utf8');
+      const compiledTemplate = Handlebars.compile(template);
 
-    const data = {
-      modelConfig,
-      isAnthropicSelected: modelConfig.provider === 'anthropic',
-      isOpenAISelected: modelConfig.provider === 'openai',
-      isMistralSelected: modelConfig.provider === 'mistral',
-      isOllamaSelected: modelConfig.provider === 'ollama',
-      anthropicApiKey: config.get<string>('anthropicApiKey') || '',
-      openaiApiKey: config.get<string>('openaiApiKey') || '',
-      mistralApiKey: config.get<string>('mistralApiKey') || '',
-      ollamaBaseURL:
-        config.get<string>('ollamaBaseURL') || 'http://localhost:11434/api',
-      ollamaModels: this.ollamaModels,
-      temperature: config.get<number>('temperature') || 0.2,
-      maxTokens: config.get<number>('maxTokens') || 1000,
-      debug: config.get<boolean>('debug') || false,
-    };
+      const config = vscode.workspace.getConfiguration('gitcomai');
+      const modelConfig = config.get<IModelConfig>('selectedModel') || {
+        provider: AIProvider.ANTHROPIC,
+        model: AnthropicModel.CLAUDE_3_SONNET,
+      };
 
-    return template(data);
+      // Get all enum values to pass to the template
+      const openAIModels = Object.values(OpenAIModel);
+      const anthropicModels = Object.values(AnthropicModel);
+      const mistralModels = Object.values(MistralModel);
+
+      return compiledTemplate({
+        modelConfig,
+
+        isAnthropicSelected: modelConfig.provider === 'anthropic',
+        isOpenAISelected: modelConfig.provider === 'openai',
+        isMistralSelected: modelConfig.provider === 'mistral',
+        isOllamaSelected: modelConfig.provider === 'ollama',
+
+        openAIModels,
+        anthropicModels,
+        mistralModels,
+
+        anthropicApiKey: config.get<string>('anthropicApiKey') || '',
+        openaiApiKey: config.get<string>('openaiApiKey') || '',
+        mistralApiKey: config.get<string>('mistralApiKey') || '',
+        ollamaBaseURL:
+          config.get<string>('ollamaBaseURL') || 'http://localhost:11434/api',
+        ollamaModels: this.ollamaModels,
+        temperature: config.get<number>('temperature') || 0.2,
+        maxTokens: config.get<number>('maxTokens') || 1000,
+        debug: config.get<boolean>('debug') || false,
+      });
+    } catch (error) {
+      logger.error('Error generating webview content:', error);
+      return `<html><body><h1>Error loading configuration</h1><p>${error}</p></body></html>`;
+    }
   }
 }

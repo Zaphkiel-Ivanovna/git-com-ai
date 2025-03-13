@@ -1,17 +1,18 @@
 <div id="mistral-section" class="model-section card {{#if isMistralSelected}}active{{/if}}">
     <div class="card-header">
         <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 3c.6 0 1.1.5 1.1 1.1v3.4c0 .6.5 1.1 1.1 1.1h3.4c.6 0 1.1.5 1.1 1.1v3.4c0 .6.5 1.1 1.1 1.1h3.4c.6 0 1.1.5 1.1 1.1v3.4c0 .6-.5 1.1-1.1 1.1H4.1a1.1 1.1 0 0 1-1.1-1.1V4.1C3 3.5 3.5 3 4.1 3H12z"></path>
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="3.29 7 12 12 20.71 7"></polyline>
+            <line x1="12" y1="22" x2="12" y2="12"></line>
         </svg>
-        <h2 class="card-title">Mistral AI Configuration</h2>
+        <h2 class="card-title">Mistral Configuration</h2>
     </div>
     <div class="form-group">
         <label for="mistral-model">Model:</label>
         <select id="mistral-model">
-            <option value="mistral-large-latest" {{#if (eq modelConfig.model "mistral-large-latest")}}selected{{/if}}>Mistral Large</option>
-            <option value="mistral-medium-latest" {{#if (eq modelConfig.model "mistral-medium-latest")}}selected{{/if}}>Mistral Medium</option>
-            <option value="mistral-small-latest" {{#if (eq modelConfig.model "mistral-small-latest")}}selected{{/if}}>Mistral Small</option>
-            <option value="codestral-latest" {{#if (eq modelConfig.model "codestral-latest")}}selected{{/if}}>Codestral</option>
+            {{#each mistralModels}}
+                <option value="{{this}}" {{#if (eq ../modelConfig.model this)}}selected{{/if}}>{{this}}</option>
+            {{/each}}
         </select>
     </div>
     <div class="form-group">

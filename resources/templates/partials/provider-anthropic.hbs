@@ -1,20 +1,18 @@
 <div id="anthropic-section" class="model-section card {{#if isAnthropicSelected}}active{{/if}}">
     <div class="card-header">
         <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <path d="M12 16v-4"></path>
-            <path d="M12 8h.01"></path>
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="3.29 7 12 12 20.71 7"></polyline>
+            <line x1="12" y1="22" x2="12" y2="12"></line>
         </svg>
-        <h2 class="card-title">Anthropic Claude Configuration</h2>
+        <h2 class="card-title">Anthropic Configuration</h2>
     </div>
     <div class="form-group">
         <label for="anthropic-model">Model:</label>
         <select id="anthropic-model">
-            <option value="claude-3-7-sonnet-latest" {{#if (eq modelConfig.model "claude-3-7-sonnet-latest")}}selected{{/if}}>Claude 3.7 Sonnet</option>
-            <option value="claude-3-5-sonnet-latest" {{#if (eq modelConfig.model "claude-3-5-sonnet-latest")}}selected{{/if}}>Claude 3.5 Sonnet</option>
-            <option value="claude-3-opus-latest" {{#if (eq modelConfig.model "claude-3-opus-latest")}}selected{{/if}}>Claude 3 Opus</option>
-            <option value="claude-3-sonnet-latest" {{#if (eq modelConfig.model "claude-3-sonnet-latest")}}selected{{/if}}>Claude 3 Sonnet</option>
-            <option value="claude-3-haiku-latest" {{#if (eq modelConfig.model "claude-3-haiku-latest")}}selected{{/if}}>Claude 3 Haiku</option>
+            {{#each anthropicModels}}
+                <option value="{{this}}" {{#if (eq ../modelConfig.model this)}}selected{{/if}}>{{this}}</option>
+            {{/each}}
         </select>
     </div>
     <div class="form-group">
