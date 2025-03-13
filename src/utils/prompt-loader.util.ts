@@ -1,7 +1,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { logger } from '../utils/logger';
+import { logger } from './logger.util';
 
 export interface IPrompts {
   systemPrompt: string;

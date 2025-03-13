@@ -2,7 +2,7 @@
   "name": "gitcomai",
   "displayName": "GitCom-AI",
   "description": "Generate commit messages using AI based on git diff",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "engines": {
     "vscode": "^1.95.0"
   },
@@ -25,10 +25,6 @@
           "light": "resources/light/ai-commit.svg",
           "dark": "resources/dark/ai-commit.svg"
         }
-      },
-      {
-        "command": "gitcomai.selectModel",
-        "title": "GitComAI: Select AI Model for Commit Messages"
       },
       {
         "command": "gitcomai.openConfig",
@@ -162,6 +158,7 @@
     "@ai-sdk/mistral": "^1.1.15",
     "@ai-sdk/openai": "^1.2.1",
     "ai": "^4.1.54",
+    "handlebars": "^4.7.8",
     "ollama-ai-provider": "^1.2.0"
   }
 }

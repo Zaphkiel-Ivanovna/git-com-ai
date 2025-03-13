@@ -1,0 +1,41 @@
+<div id="ollama-section" class="model-section card {{#if isOllamaSelected}}active{{/if}}">
+    <div class="card-header">
+        <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+            <path d="M7 7h.01"></path>
+            <path d="M17 7h.01"></path>
+            <path d="M7 17h.01"></path>
+            <path d="M17 17h.01"></path>
+        </svg>
+        <h2 class="card-title">Ollama (Local) Configuration</h2>
+    </div>
+    <div class="form-group">
+        <label for="ollama-model">Model:</label>
+        <div class="model-select-container">
+            <select id="ollama-model" {{#unless ollamaModels.length}}disabled{{/unless}}>
+                {{#if ollamaModels.length}}
+                    {{#each ollamaModels}}
+                        <option value="{{this.name}}" {{#if (eq ../modelConfig.model this.name)}}selected{{/if}}>{{this.name}} ({{this.size}})</option>
+                    {{/each}}
+                {{else}}
+                    <option value="">Loading models...</option>
+                {{/if}}
+            </select>
+            <button id="refresh-ollama-models" class="secondary-button" title="Refresh model list">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 2v6h-6"></path>
+                    <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                    <path d="M3 22v-6h6"></path>
+                    <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                </svg>
+            </button>
+        </div>
+        <div id="ollama-models-status" class="status-message" style="display: none;"></div>
+    </div>
+    <div class="form-group">
+        <label for="ollama-base-url">Base URL:</label>
+        <div class="api-key-container">
+            <input type="text" id="ollama-base-url" value="{{ollamaBaseURL}}" placeholder="http://localhost:11434/api" />
+        </div>
+    </div>
+</div>

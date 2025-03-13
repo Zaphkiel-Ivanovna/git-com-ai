@@ -1,0 +1,26 @@
+<div id="openai-section" class="model-section card {{#if isOpenAISelected}}active{{/if}}">
+    <div class="card-header">
+        <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="3.29 7 12 12 20.71 7"></polyline>
+            <line x1="12" y1="22" x2="12" y2="12"></line>
+        </svg>
+        <h2 class="card-title">OpenAI Configuration</h2>
+    </div>
+    <div class="form-group">
+        <label for="openai-model">Model:</label>
+        <select id="openai-model">
+            <option value="gpt-4o" {{#if (eq modelConfig.model "gpt-4o")}}selected{{/if}}>GPT-4o</option>
+            <option value="gpt-4-turbo" {{#if (eq modelConfig.model "gpt-4-turbo")}}selected{{/if}}>GPT-4 Turbo</option>
+            <option value="gpt-4" {{#if (eq modelConfig.model "gpt-4")}}selected{{/if}}>GPT-4</option>
+            <option value="gpt-3.5-turbo" {{#if (eq modelConfig.model "gpt-3.5-turbo")}}selected{{/if}}>GPT-3.5 Turbo</option>
+            <option value="o3-mini" {{#if (eq modelConfig.model "o3-mini")}}selected{{/if}}>O3 Mini</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="openai-api-key">API Key:</label>
+        <div class="api-key-container">
+            <input type="password" id="openai-api-key" value="{{openaiApiKey}}" />
+        </div>
+    </div>
+</div>

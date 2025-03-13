@@ -1,0 +1,26 @@
+<div id="anthropic-section" class="model-section card {{#if isAnthropicSelected}}active{{/if}}">
+    <div class="card-header">
+        <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 16v-4"></path>
+            <path d="M12 8h.01"></path>
+        </svg>
+        <h2 class="card-title">Anthropic Claude Configuration</h2>
+    </div>
+    <div class="form-group">
+        <label for="anthropic-model">Model:</label>
+        <select id="anthropic-model">
+            <option value="claude-3-7-sonnet-latest" {{#if (eq modelConfig.model "claude-3-7-sonnet-latest")}}selected{{/if}}>Claude 3.7 Sonnet</option>
+            <option value="claude-3-5-sonnet-latest" {{#if (eq modelConfig.model "claude-3-5-sonnet-latest")}}selected{{/if}}>Claude 3.5 Sonnet</option>
+            <option value="claude-3-opus-latest" {{#if (eq modelConfig.model "claude-3-opus-latest")}}selected{{/if}}>Claude 3 Opus</option>
+            <option value="claude-3-sonnet-latest" {{#if (eq modelConfig.model "claude-3-sonnet-latest")}}selected{{/if}}>Claude 3 Sonnet</option>
+            <option value="claude-3-haiku-latest" {{#if (eq modelConfig.model "claude-3-haiku-latest")}}selected{{/if}}>Claude 3 Haiku</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="anthropic-api-key">API Key:</label>
+        <div class="api-key-container">
+            <input type="password" id="anthropic-api-key" value="{{anthropicApiKey}}" />
+        </div>
+    </div>
+</div>

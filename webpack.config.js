@@ -18,9 +18,15 @@ const config = {
   devtool: 'nosources-source-map',
   externals: {
     vscode: 'commonjs vscode',
+    fs: 'commonjs fs',
+    path: 'commonjs path',
   },
   resolve: {
+    mainFields: ['browser', 'module', 'main'],
     extensions: ['.ts', '.js'],
+    alias: {
+      handlebars: 'handlebars/dist/handlebars.js',
+    },
   },
   module: {
     rules: [

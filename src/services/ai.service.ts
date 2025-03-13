@@ -5,13 +5,13 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { createMistral } from '@ai-sdk/mistral';
 import { createOllama } from 'ollama-ai-provider';
 import { AIProvider, AnthropicModel, IModelConfig } from '../@types/types';
-import { logger } from '../utils/logger';
+import { logger } from '../utils/logger.util';
 import {
   commitMessageSchema,
   ICommitBodyItem,
   ICommitMessage,
 } from '../models/commit.schema';
-import { loadCommitPrompt } from '../prompts/prompt-loader.util';
+import { loadCommitPrompt } from '../utils/prompt-loader.util';
 import { UIHandler } from '../ui/ui.handler';
 
 export class AIService {
@@ -178,6 +178,8 @@ export class AIService {
             const { partialObjectStream, warnings } = streamObject({
               model: provider(model, { structuredOutputs: true }),
               schema: commitMessageSchema,
+              maxTokens: config.maxTokens,
+              temperature: config.temperature,
               prompt: `${prompts.systemPrompt}\n\n${prompts.userPrompt}`,
               abortSignal: controller.signal,
               onFinish: ({ usage, object }) => {
@@ -201,6 +203,11 @@ export class AIService {
                 resolve(object || null);
               },
             });
+
+            logger.debug('Temperature: ' + config.temperature);
+            logger.debug('Max tokens: ' + config.maxTokens);
+            logger.debug('Model: ' + modelConfig.model);
+            logger.debug('Provider: ' + modelConfig.provider);
 
             (async () => {
               try {
@@ -318,6 +325,6 @@ export class AIService {
       }
     }
 
-    return result || '⏳ Generating commit message...';
+    return result;
   }
 }
