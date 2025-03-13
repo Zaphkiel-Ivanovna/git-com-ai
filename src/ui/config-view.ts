@@ -2,14 +2,10 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as Handlebars from 'handlebars';
-import {
-  AIProvider,
-  IModelConfig,
-  IOllamaTagsResponse,
-  IOllamaModel,
-} from '../@types/types';
 import { logger } from '../utils/logger.util';
 import { formatSize } from '../utils/format.util';
+import { IModelConfig, AIProvider } from '../@types/model.types';
+import { IOllamaTagsResponse, IOllamaModel } from '../@types/ollama.types';
 
 export class ConfigView {
   private panel: vscode.WebviewPanel | undefined;

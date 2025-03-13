@@ -1,12 +1,11 @@
 import * as vscode from 'vscode';
 import { exec } from 'child_process';
 import * as util from 'util';
-import { IGitDiff } from '../@types/types';
 
 export class GitService {
   private execPromise = util.promisify(exec);
 
-  public async getGitDiff(): Promise<IGitDiff | null> {
+  public async getGitDiff(): Promise<string | null> {
     try {
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
 
@@ -25,10 +24,7 @@ export class GitService {
         return null;
       }
 
-      return {
-        diff: stagedChanges,
-        workingDirectory: workspaceFolder,
-      };
+      return stagedChanges;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);

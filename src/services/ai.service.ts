@@ -4,7 +4,6 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createMistral } from '@ai-sdk/mistral';
 import { createOllama } from 'ollama-ai-provider';
-import { AIProvider, AnthropicModel, IModelConfig } from '../@types/types';
 import { logger } from '../utils/logger.util';
 import {
   commitMessageSchema,
@@ -12,7 +11,13 @@ import {
   ICommitMessage,
 } from '../models/commit.schema';
 import { loadCommitPrompt } from '../utils/prompt-loader.util';
-import { UIHandler } from '../ui/ui.handler';
+import {
+  IModelConfig,
+  AIProvider,
+  AnthropicModel,
+} from '../@types/model.types';
+import { calculateCost } from '../utils/cost.util';
+import { formatCommitMessage } from '../utils/format.util';
 
 export class AIService {
   private apiKeys: Record<string, string | undefined> = {
@@ -21,14 +26,11 @@ export class AIService {
     mistral: undefined,
   };
   private ollamaBaseURL: string | undefined;
-  private uiHandler: UIHandler;
 
   constructor() {
     this.loadApiKeys();
     this.loadOllamaConfig();
-    this.uiHandler = new UIHandler();
 
-    // Ajouter un écouteur pour les changements de configuration
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('gitcomai')) {
         logger.debug('Configuration changed, reloading AI service');
@@ -185,20 +187,34 @@ export class AIService {
               onFinish: ({ usage, object }) => {
                 logger.debug(`Usage: ${JSON.stringify(usage)}`);
 
-                progress.report({
-                  message: `Commit usage: ${usage.totalTokens} tokens`,
-                  increment: 100,
-                });
+                const cost = calculateCost(
+                  modelConfig,
+                  usage.promptTokens,
+                  usage.completionTokens
+                );
+
+                if (cost) {
+                  progress.report({
+                    message: `Commit usage: ${usage.totalTokens} tokens (Cost: $${cost})`,
+                    increment: 100,
+                  });
+                } else {
+                  progress.report({
+                    message: `Commit usage: ${usage.totalTokens} tokens`,
+                    increment: 100,
+                  });
+                }
 
                 if (object && gitInputBox) {
-                  const finalFormattedMessage =
-                    this.uiHandler.formatCommitMessage(object);
+                  const finalFormattedMessage = formatCommitMessage(object);
                   gitInputBox.value = finalFormattedMessage;
                 }
 
                 logger.debug(
                   `Generated commit message: ${JSON.stringify(object)}`
                 );
+
+                logger.debug(`Cost: $${cost}`);
 
                 resolve(object || null);
               },

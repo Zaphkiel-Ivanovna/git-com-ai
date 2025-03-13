@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 import { GitService } from './services/git.service';
 import { AIService } from './services/ai.service';
 import { Logger } from './utils/logger.util';
-import { AIProvider, IModelConfig } from './@types/types';
 import { ConfigView } from './ui/config-view';
 import { GitExtension } from './@types/git';
+import { AIProvider, IModelConfig } from './@types/model.types';
 
 const logger = Logger.getInstance();
 
@@ -70,7 +70,7 @@ export function activate(context: vscode.ExtensionContext): void {
               logger.log(`Generating commit message with ${provider} API`);
 
               const commitMessage = await aiService.generateCommitMessage(
-                gitDiff.diff,
+                gitDiff,
                 stagedFiles,
                 progress,
                 token
@@ -85,7 +85,7 @@ export function activate(context: vscode.ExtensionContext): void {
               return new Promise<void>((resolve) => {
                 setTimeout(() => {
                   resolve();
-                }, 2000);
+                }, 5000);
               });
             } catch (error) {
               logger.error('Error in commit message generation process', error);
