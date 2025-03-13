@@ -9,8 +9,43 @@
         </svg>
         <h2 class="card-title">Ollama (Local) Configuration</h2>
     </div>
+ 
     <div class="form-group">
-        <label for="ollama-model">Model:</label>
+        <label for="ollama-base-url">
+            Base URL:
+            <div class="tooltip">
+                <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 16v-4"></path>
+                    <path d="M12 8h.01"></path>
+                </svg>
+                <span class="tooltip-text">The URL of your Ollama server. Default is http://localhost:11434/api</span>
+            </div>
+        </label>
+        <div class="api-key-container">
+            <input type="text" id="ollama-base-url" value="{{ollamaBaseURL}}" placeholder="http://localhost:11434/api" />
+            <button id="connect-ollama" class="secondary-button" title="Connect to Ollama server">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="M12 5v14"></path>
+                </svg>
+                Connect
+            </button>
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <label for="ollama-model">
+            Model:
+            <div class="tooltip">
+                <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 16v-4"></path>
+                    <path d="M12 8h.01"></path>
+                </svg>
+                <span class="tooltip-text">Select a model from your local Ollama installation</span>
+            </div>
+        </label>
         <div class="model-select-container">
             <select id="ollama-model" {{#unless ollamaModels.length}}disabled{{/unless}}>
                 {{#if ollamaModels.length}}
@@ -32,10 +67,89 @@
         </div>
         <div id="ollama-models-status" class="status-message" style="display: none;"></div>
     </div>
+    
     <div class="form-group">
-        <label for="ollama-base-url">Base URL:</label>
-        <div class="api-key-container">
-            <input type="text" id="ollama-base-url" value="{{ollamaBaseURL}}" placeholder="http://localhost:11434/api" />
+        <div class="model-details-container">
+            <div class="model-details-header">Model Details</div>
+            <div id="ollama-model-details" class="model-details">
+                {{#if ollamaModels.length}}
+                    <div class="model-detail-item">
+                        <span class="detail-label">Parameter Size:</span>
+                        <span class="detail-value" id="ollama-param-size">{{#with (lookup ollamaModels 0)}}{{this.parameterSize}}{{/with}}</span>
+                    </div>
+                    <div class="model-detail-item">
+                        <span class="detail-label">Quantization:</span>
+                        <span class="detail-value" id="ollama-quantization">{{#with (lookup ollamaModels 0)}}{{this.quantizationLevel}}{{/with}}</span>
+                    </div>
+                    <div class="model-detail-item">
+                        <span class="detail-label">Size on Disk:</span>
+                        <span class="detail-value" id="ollama-size">{{#with (lookup ollamaModels 0)}}{{this.size}}{{/with}}</span>
+                    </div>
+                {{else}}
+                    <div class="model-detail-empty">Connect to Ollama to view model details</div>
+                {{/if}}
+            </div>
+        </div>
+    </div>
+    
+    <div class="form-group">
+        <div class="action-buttons">
+            <button id="pull-ollama-model" class="primary-button" title="Pull a new model from Ollama registry">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Pull New Model
+            </button>
         </div>
     </div>
 </div>
+
+<style>
+    .model-details-container {
+        background-color: var(--vscode-editor-background);
+        border: 1px solid var(--vscode-panel-border);
+        border-radius: 4px;
+        padding: 8px;
+        margin-top: 8px;
+    }
+    
+    .model-details-header {
+        font-weight: bold;
+        margin-bottom: 8px;
+        color: var(--vscode-editor-foreground);
+    }
+    
+    .model-details {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .model-detail-item {
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .detail-label {
+        color: var(--vscode-descriptionForeground);
+    }
+    
+    .detail-value {
+        font-family: var(--vscode-editor-font-family);
+    }
+    
+    .model-detail-empty {
+        color: var(--vscode-descriptionForeground);
+        font-style: italic;
+        text-align: center;
+        padding: 8px 0;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+    }
+</style>

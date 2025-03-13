@@ -68,6 +68,10 @@ export class ConfigView {
     Handlebars.registerHelper('eq', function (a, b) {
       return a === b;
     });
+
+    Handlebars.registerHelper('json', function (context) {
+      return new Handlebars.SafeString(JSON.stringify(context));
+    });
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -124,6 +128,168 @@ export class ConfigView {
     );
   }
 
+  private async showOllamaModelPullDialog(): Promise<void> {
+    const modelName = await vscode.window.showInputBox({
+      prompt:
+        'Enter the name of the model to pull (e.g., llama3, mistral, codellama)',
+      placeHolder: 'Model name',
+      validateInput: (value) => {
+        return value && value.trim().length > 0
+          ? null
+          : 'Please enter a valid model name';
+      },
+    });
+
+    if (!modelName) {
+      return; // User cancelled
+    }
+
+    const config = vscode.workspace.getConfiguration('gitcomai');
+    const ollamaBaseURL =
+      config.get<string>('ollamaBaseURL') || 'http://localhost:11434/api';
+
+    try {
+      this.panel?.webview.postMessage({
+        command: 'ollamaModelPulling',
+        modelName,
+        status: 'started',
+      });
+
+      // Show progress notification
+      await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: `Pulling Ollama model: ${modelName}`,
+          cancellable: false,
+        },
+        async (progress) => {
+          let apiUrl = ollamaBaseURL;
+          if (!apiUrl.endsWith('/api')) {
+            apiUrl = apiUrl.endsWith('/') ? `${apiUrl}api` : `${apiUrl}/api`;
+          }
+
+          const pullUrl = `${apiUrl}/pull`;
+
+          // Start the pull operation with streaming response
+          const response = await fetch(pullUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name: modelName, stream: true }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`Failed to pull model: ${response.statusText}`);
+          }
+
+          // Process the streaming response
+          const reader = response.body?.getReader();
+          if (!reader) {
+            throw new Error('Failed to get response reader');
+          }
+
+          const decoder = new TextDecoder();
+          let downloadedSize = 0;
+          let totalSize = 0;
+          let lastStatus = '';
+          let done = false;
+
+          // Utiliser une boucle avec condition explicite
+          while (!done) {
+            const result = await reader.read();
+            done = result.done;
+
+            // Si la lecture est terminée, sortir de la boucle
+            if (done) {
+              break;
+            }
+
+            // Traiter les données reçues
+            const chunk = decoder.decode(result.value, { stream: true });
+            const lines = chunk.split('\n').filter((line) => line.trim());
+
+            for (const line of lines) {
+              try {
+                const data = JSON.parse(line);
+
+                if (data.status) {
+                  lastStatus = data.status;
+                }
+
+                if (data.total) {
+                  totalSize = parseInt(data.total, 10);
+                }
+
+                if (data.completed) {
+                  downloadedSize = parseInt(data.completed, 10);
+                }
+
+                // Calculer le pourcentage de progression
+                let progressMessage = lastStatus;
+                let progressPercent = 0;
+
+                if (totalSize > 0 && downloadedSize > 0) {
+                  progressPercent = (downloadedSize / totalSize) * 100;
+                  // Utiliser formatSize au lieu de calculer manuellement les MB
+                  const downloadedFormatted = formatSize(downloadedSize);
+                  const totalFormatted = formatSize(totalSize);
+                  progressMessage = `${lastStatus} - ${downloadedFormatted} / ${totalFormatted} (${progressPercent.toFixed(
+                    1
+                  )}%)`;
+                }
+
+                // Mettre à jour la progression
+                progress.report({
+                  increment:
+                    progressPercent > 0 ? progressPercent / 100 : undefined,
+                  message: progressMessage,
+                });
+
+                // Mettre à jour la webview avec la progression
+                this.panel?.webview.postMessage({
+                  command: 'ollamaModelPullingProgress',
+                  modelName,
+                  status: 'downloading',
+                  progress: progressPercent,
+                  message: progressMessage,
+                });
+              } catch (parseError) {
+                console.warn('Error parsing JSON from stream:', parseError);
+              }
+            }
+          }
+
+          // Refresh the model list
+          await this.fetchOllamaModels(ollamaBaseURL);
+
+          this.panel?.webview.postMessage({
+            command: 'ollamaModelPulling',
+            modelName,
+            status: 'completed',
+          });
+        }
+      );
+
+      vscode.window.showInformationMessage(
+        `Successfully pulled Ollama model: ${modelName}`
+      );
+    } catch (error) {
+      this.panel?.webview.postMessage({
+        command: 'ollamaModelPulling',
+        modelName,
+        status: 'failed',
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      vscode.window.showErrorMessage(
+        `Failed to pull Ollama model: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+    }
+  }
+
   public async show(): Promise<void> {
     if (this.panel) {
       this.panel.reveal();
@@ -156,6 +322,9 @@ export class ConfigView {
             break;
           case 'fetchOllamaModels':
             await this.fetchOllamaModels(message.baseUrl);
+            break;
+          case 'showOllamaModelPullDialog':
+            await this.showOllamaModelPullDialog();
             break;
         }
       },
@@ -196,11 +365,15 @@ export class ConfigView {
       const data = (await response.json()) as IOllamaTagsResponse;
 
       if (data && Array.isArray(data.models)) {
+        data.models.sort((a, b) => a.name.localeCompare(b.name));
+
         this.ollamaModels = data.models.map((model: IOllamaModel) => ({
           name: model.name,
           size: formatSize(model.size),
-          parameterSize: model.details.parameter_size,
-          quantizationLevel: model.details.quantization_level,
+          parameterSize: model.details.parameter_size || 'Unknown',
+          quantizationLevel: model.details.quantization_level || 'None',
+          family: model.details.family || 'Unknown',
+          format: model.details.format || 'Unknown',
         }));
 
         this.updateWebviewContent();
@@ -209,7 +382,16 @@ export class ConfigView {
           command: 'ollamaModelsLoaded',
           success: true,
           count: this.ollamaModels.length,
+          models: this.ollamaModels,
         });
+
+        // Save the base URL to configuration
+        const configuration = vscode.workspace.getConfiguration('gitcomai');
+        await configuration.update(
+          'ollamaBaseURL',
+          baseUrl,
+          vscode.ConfigurationTarget.Global
+        );
       } else {
         throw new Error('Invalid response format from Ollama API');
       }

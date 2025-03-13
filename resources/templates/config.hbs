@@ -284,8 +284,165 @@
                 setTimeout(() => {
                     saveButton.innerHTML = originalText;
                 }, 2000);
-            });   
-        })();
+            });
+
+             document.addEventListener('DOMContentLoaded', function() {
+            const ollamaModelSelect = document.getElementById('ollama-model');
+            const paramSizeElement = document.getElementById('ollama-param-size');
+            const quantizationElement = document.getElementById('ollama-quantization');
+            const sizeElement = document.getElementById('ollama-size');
+            
+            // Update model details when selection changes
+            if (ollamaModelSelect) {
+                ollamaModelSelect.addEventListener('change', function() {
+                    const selectedOption = ollamaModelSelect.options[ollamaModelSelect.selectedIndex];
+                    const modelName = selectedOption.value;
+                    
+                    // Find the selected model in the ollamaModels array
+                    const ollamaModels = {{{json ollamaModels}}};
+                    const selectedModel = ollamaModels.find(model => model.name === modelName);
+                    
+                    if (selectedModel && paramSizeElement && quantizationElement && sizeElement) {
+                        paramSizeElement.textContent = selectedModel.parameterSize || 'N/A';
+                        quantizationElement.textContent = selectedModel.quantizationLevel || 'N/A';
+                        sizeElement.textContent = selectedModel.size || 'N/A';
+                    }
+                });
+            }
+            
+            // Connect button functionality
+            const connectButton = document.getElementById('connect-ollama');
+            const baseUrlInput = document.getElementById('ollama-base-url');
+            
+            if (connectButton && baseUrlInput) {
+                connectButton.addEventListener('click', function() {
+                    const baseUrl = baseUrlInput.value.trim();
+                    if (baseUrl) {
+                        // Post message to extension to fetch models
+                        vscode.postMessage({
+                            command: 'fetchOllamaModels',
+                            baseUrl: baseUrl
+                        });
+                        
+                        // Show loading status
+                        const statusElement = document.getElementById('ollama-models-status');
+                        if (statusElement) {
+                            statusElement.textContent = 'Connecting to Ollama server...';
+                            statusElement.style.display = 'block';
+                            statusElement.className = 'status-message info';
+                        }
+                    }
+                });
+            }
+            
+            // Pull model button functionality
+            const pullModelButton = document.getElementById('pull-ollama-model');
+            
+            if (pullModelButton) {
+                pullModelButton.addEventListener('click', function() {
+                    vscode.postMessage({
+                        command: 'showOllamaModelPullDialog'
+                    });
+                });
+            }
+            
+            // Refresh button functionality
+            const refreshButton = document.getElementById('refresh-ollama-models');
+            
+            if (refreshButton && baseUrlInput) {
+                refreshButton.addEventListener('click', function() {
+                    const baseUrl = baseUrlInput.value.trim();
+                    if (baseUrl) {
+                        vscode.postMessage({
+                            command: 'fetchOllamaModels',
+                            baseUrl: baseUrl
+                        });
+                        
+                        // Show loading status
+                        const statusElement = document.getElementById('ollama-models-status');
+                        if (statusElement) {
+                            statusElement.textContent = 'Refreshing model list...';
+                            statusElement.style.display = 'block';
+                            statusElement.className = 'status-message info';
+                        }
+                    }
+                });
+            }
+        });
+
+        window.addEventListener('message', event => {
+            const message = event.data;
+            
+            // Gérer les messages de l'extension
+            if (message.command === 'ollamaModelsLoaded') {
+                const statusElement = document.getElementById('ollama-models-status');
+                if (statusElement) {
+                    if (message.success) {
+                        statusElement.textContent = `Successfully loaded ${message.count} models`;
+                        statusElement.className = 'status-message success';
+                        
+                        // Masquer le message après 3 secondes
+                        setTimeout(() => {
+                            statusElement.style.display = 'none';
+                        }, 3000);
+                    } else {
+                        statusElement.textContent = `Error: ${message.error}`;
+                        statusElement.className = 'status-message error';
+                    }
+                }
+            }
+        
+            if (message.command === 'ollamaModelPulling') {
+                const statusElement = document.getElementById('ollama-models-status');
+                if (statusElement) {
+                    if (message.status === 'started') {
+                        statusElement.textContent = `Pulling model: ${message.modelName}...`;
+                        statusElement.className = 'status-message info';
+                        statusElement.style.display = 'block';
+                    } else if (message.status === 'completed') {
+                        statusElement.textContent = `Successfully pulled model: ${message.modelName}`;
+                        statusElement.className = 'status-message success';
+                        
+                        // Masquer le message après 5 secondes
+                        setTimeout(() => {
+                            statusElement.style.display = 'none';
+                        }, 5000);
+                    } else if (message.status === 'failed') {
+                        statusElement.textContent = `Failed to pull model: ${message.error}`;
+                        statusElement.className = 'status-message error';
+                    }
+                }
+            }
+
+            if (message.command === 'ollamaModelPullingProgress') {
+                const statusElement = document.getElementById('ollama-models-status');
+                if (statusElement) {
+                    statusElement.textContent = message.message;
+                    statusElement.className = 'status-message info';
+                    statusElement.style.display = 'block';
+                    
+                    // Optionnel : Ajouter une barre de progression
+                    let progressBar = document.getElementById('ollama-progress-bar');
+                    if (!progressBar) {
+                        progressBar = document.createElement('div');
+                        progressBar.id = 'ollama-progress-bar';
+                        progressBar.className = 'progress-bar';
+                        
+                        const progressInner = document.createElement('div');
+                        progressInner.className = 'progress-inner';
+                        progressBar.appendChild(progressInner);
+                        
+                        statusElement.parentNode.insertBefore(progressBar, statusElement.nextSibling);
+                    }
+                    
+                    const progressInner = progressBar.querySelector('.progress-inner');
+                    if (progressInner) {
+                        progressInner.style.width = `${message.progress}%`;
+                    }
+                }
+            }
+        });
+    })();
     </script>
 </body>
 </html>

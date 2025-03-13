@@ -323,3 +323,136 @@ button svg {
   font-size: 14px;
   color: var(--vscode-descriptionForeground);
 }
+
+/* Add these styles to your existing CSS file */
+
+.model-select-container {
+  display: flex;
+  gap: 8px;
+}
+
+.model-select-container select {
+  flex: 1;
+}
+
+.api-key-container {
+  display: flex;
+  gap: 8px;
+}
+
+.api-key-container input {
+  flex: 1;
+}
+
+.status-message {
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.status-message.info {
+  background-color: var(--vscode-infoBackground);
+  color: var(--vscode-infoForeground);
+}
+
+.status-message.error {
+  background-color: var(--vscode-errorBackground);
+  color: var(--vscode-errorForeground);
+}
+
+.status-message.success {
+  background-color: var(
+    --vscode-successBackground,
+    var(--vscode-notificationsInfoBackground)
+  );
+  color: var(
+    --vscode-successForeground,
+    var(--vscode-notificationsInfoForeground)
+  );
+}
+
+.primary-button,
+.secondary-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.primary-button {
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border: none;
+}
+
+.primary-button:hover {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+.secondary-button {
+  background-color: transparent;
+  color: var(--vscode-button-secondaryForeground);
+  border: 1px solid var(--vscode-button-secondaryBackground);
+}
+
+.secondary-button:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+.tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+}
+
+.tooltip-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.tooltip .tooltip-text {
+  visibility: hidden;
+  width: 200px;
+  background-color: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  text-align: center;
+  border-radius: 4px;
+  padding: 8px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -100px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--vscode-widget-border);
+}
+
+.tooltip:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background-color: var(--vscode-progressBar-background);
+  border-radius: 3px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.progress-inner {
+  height: 100%;
+  background-color: var(--vscode-progressBar-foreground);
+  width: 0;
+  transition: width 0.3s ease;
+}

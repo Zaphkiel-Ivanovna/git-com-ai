@@ -46,13 +46,6 @@ export interface IModelDetails {
 export type AIModel = OpenAIModel | AnthropicModel | MistralModel;
 
 export const OPENAI_MODEL_DETAILS: Record<OpenAIModel, IModelDetails> = {
-  [OpenAIModel.GPT_45_PREVIEW]: {
-    title: 'GPT-4.5 Preview',
-    description:
-      "OpenAI's most advanced model with enhanced reasoning capabilities",
-    inputPrice: 75.0,
-    outputPrice: 150.0,
-  },
   [OpenAIModel.GPT_4O]: {
     title: 'GPT-4o',
     description: 'Multimodal model with strong reasoning and coding abilities',
@@ -82,6 +75,13 @@ export const OPENAI_MODEL_DETAILS: Record<OpenAIModel, IModelDetails> = {
     description: 'Smaller version of o1 with efficient reasoning capabilities',
     inputPrice: 1.1,
     outputPrice: 4.4,
+  },
+  [OpenAIModel.GPT_45_PREVIEW]: {
+    title: 'GPT-4.5 Preview',
+    description:
+      "OpenAI's most advanced model with enhanced reasoning capabilities",
+    inputPrice: 75.0,
+    outputPrice: 150.0,
   },
 };
 
