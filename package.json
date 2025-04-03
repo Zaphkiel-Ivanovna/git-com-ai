@@ -1,12 +1,14 @@
 {
   "name": "gitcomai",
   "displayName": "GitCom-AI",
-  "description": "Generate commit messages using Anthropic AI based on git diff",
-  "version": "0.2.10",
+  "description": "Generate commit messages using AI based on git diff",
+  "version": "1.0.5",
   "engines": {
     "vscode": "^1.95.0"
   },
   "publisher": "ZaphkielIvanovna",
+  "repository": "https://github.com/Zaphkiel-Ivanovna/git-com-ai",
+  "icon": "images/logo.png",
   "categories": [
     "Other"
   ],
@@ -18,11 +20,19 @@
     "commands": [
       {
         "command": "gitcomai.generateCommitMessage",
-        "title": "Generate Commit Message with AI",
+        "title": "GitComAI: Generate Commit Message with AI",
         "icon": {
-          "light": "resources/light/commit-icon.svg",
-          "dark": "resources/dark/commit-icon.svg"
+          "light": "resources/light/ai-commit.svg",
+          "dark": "resources/dark/ai-commit.svg"
         }
+      },
+      {
+        "command": "gitcomai.openConfig",
+        "title": "GitComAI: Open Configuration"
+      },
+      {
+        "command": "gitcomai.showLogs",
+        "title": "GitComAI: Show Logs"
       }
     ],
     "menus": {
@@ -39,26 +49,78 @@
           "when": "scmProvider == git",
           "group": "inline"
         }
+      ],
+      "commandPalette": [
+        {
+          "command": "gitcomai.openConfig",
+          "when": "true"
+        }
       ]
     },
     "configuration": {
       "title": "GitComAI",
       "properties": {
+        "gitcomai.selectedModel": {
+          "type": "object",
+          "default": {
+            "provider": "anthropic",
+            "model": "claude-3-7-sonnet-latest"
+          },
+          "description": "The AI model to use for generating commit messages",
+          "properties": {
+            "provider": {
+              "type": "string",
+              "enum": [
+                "anthropic",
+                "openai",
+                "mistral",
+                "ollama"
+              ],
+              "default": "anthropic",
+              "description": "The AI provider to use"
+            },
+            "model": {
+              "type": "string",
+              "description": "The model to use from the selected provider"
+            }
+          }
+        },
         "gitcomai.anthropicApiKey": {
           "type": "string",
           "default": "",
           "description": "API Key for Anthropic Claude"
         },
-        "gitcomai.model": {
+        "gitcomai.openaiApiKey": {
           "type": "string",
-          "default": "claude-3-7-sonnet-latest",
-          "enum": [
-            "claude-3-7-sonnet-latest",
-            "claude-3-5-haiku-latest",
-            "claude-3-5-sonnet-latest",
-            "claude-3-opus-latest"
-          ],
-          "description": "Anthropic Claude model to use"
+          "default": "",
+          "description": "API Key for OpenAI"
+        },
+        "gitcomai.mistralApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API Key for Mistral AI"
+        },
+        "gitcomai.ollamaBaseURL": {
+          "type": "string",
+          "default": "http://localhost:11434/api",
+          "description": "Base URL for Ollama API (default: http://localhost:11434/api)"
+        },
+        "gitcomai.temperature": {
+          "type": "number",
+          "default": 0.2,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Temperature for AI generation (0-1). Lower values make output more deterministic."
+        },
+        "gitcomai.maxTokens": {
+          "type": "number",
+          "default": 1000,
+          "description": "Maximum number of tokens to generate"
+        },
+        "gitcomai.debug": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug logging"
         }
       }
     }
@@ -68,25 +130,35 @@
     "compile": "webpack",
     "watch": "webpack --watch",
     "package": "webpack --mode production --devtool hidden-source-map",
+    "build": "mkdir -p build & vsce package -o build/gitcomai-${npm_package_version}.vsix",
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
-    "lint": "eslint src --ext ts",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
-    "test": "node ./out/test/runTest.js",
-    "vsix": "vsce package"
-  },
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.38.0"
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
-    "@types/node": "^16.18.126",
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "20.x",
     "@types/vscode": "^1.95.0",
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "@typescript-eslint/parser": "^6.21.0",
-    "eslint": "^8.57.1",
-    "ts-loader": "^9.5.2",
-    "typescript": "^5.7.3",
-    "webpack": "^5.98.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.1",
+    "@typescript-eslint/parser": "^6.19.1",
+    "@vscode/test-electron": "^2.3.9",
+    "eslint": "^8.56.0",
+    "glob": "^10.3.10",
+    "mocha": "^10.2.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3",
+    "webpack": "^5.90.0",
     "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^1.1.15",
+    "@ai-sdk/mistral": "^1.1.15",
+    "@ai-sdk/openai": "^1.2.1",
+    "ai": "^4.1.54",
+    "handlebars": "^4.7.8",
+    "ollama-ai-provider": "^1.2.0"
   }
 }

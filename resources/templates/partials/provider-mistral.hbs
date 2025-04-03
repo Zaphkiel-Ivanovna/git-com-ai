@@ -1,0 +1,22 @@
+<div id="mistral-section" class="model-section card {{#if isMistralSelected}}active{{/if}}">
+    <div class="card-header">
+        <svg class="card-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19.1899 0H24V24H19.1899V0Z" fill="currentColor"/>
+            <path d="M0 0H4.81013V24H0V0Z" fill="currentColor"/>
+            <path d="M4.81013 4.77966H9.62025V14.3898H4.81013V4.77966Z" fill="currentColor"/>
+            <path d="M14.3797 4.77966H19.1899V14.3898H14.3797V4.77966Z" fill="currentColor"/>
+            <path d="M9.62025 9.55932H14.4304V19.1695H9.62025V9.55932Z" fill="currentColor"/>
+        </svg>
+
+        <h2 class="card-title">Mistral Configuration</h2>
+    </div>
+    <div class="form-group">
+         {{> model-selector mistralModelSelector}}
+    </div>
+    <div class="form-group">
+        <label for="mistral-api-key">API Key:</label>
+        <div class="api-key-container">
+            <input type="password" id="mistral-api-key" value="{{mistralApiKey}}" />
+        </div>
+    </div>
+</div>

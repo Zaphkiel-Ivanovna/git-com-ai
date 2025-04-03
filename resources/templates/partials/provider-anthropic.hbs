@@ -1,0 +1,18 @@
+<div id="anthropic-section" class="model-section card {{#if isAnthropicSelected}}active{{/if}}">
+    <div class="card-header">
+        <svg class="card-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13.7888 3.932L20.2221 20.0681H23.75L17.3167 3.932H13.7888Z" fill="currentColor" />
+            <path d="M6.32538 13.6828L8.52662 8.01213L10.7279 13.6828H6.32538ZM6.68225 3.932L0.25 20.0681H3.84652L5.16202 16.6795H11.8914L13.2067 20.0681H16.8033L10.371 3.932H6.68225Z" fill="currentColor" />
+        </svg>
+        <h2 class="card-title">Anthropic Configuration</h2>
+    </div>
+    <div class="form-group">
+        {{> model-selector anthropicModelSelector}}
+    </div>
+    <div class="form-group">
+        <label for="anthropic-api-key">API Key:</label>
+        <div class="api-key-container">
+            <input type="password" id="anthropic-api-key" value="{{anthropicApiKey}}" />
+        </div>
+    </div>
+</div>

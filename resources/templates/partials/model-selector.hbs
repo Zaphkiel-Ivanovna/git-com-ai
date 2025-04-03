@@ -1,0 +1,217 @@
+<div class="custom-select-container">
+  <div class="select-header" id="{{id}}-header">
+    <span class="selected-option-text">Select a model</span>
+    <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  </div>
+  
+  <div class="select-options" id="{{id}}-options">
+    {{#each options}}
+      <div class="select-option" 
+           data-value="{{value}}" 
+           data-provider="{{provider}}"
+           data-description="{{description}}" 
+           data-input-price="{{inputPrice}}" 
+           data-output-price="{{outputPrice}}">
+        <div class="option-main">
+          <div class="option-title">{{title}}</div>
+          <div class="option-description">{{description}}</div>
+        </div>
+        <div class="option-pricing">
+          <div class="price-item">
+            <span class="price-label">Input:</span>
+            <span class="price-value">${{inputPrice}}/1M tokens</span>
+          </div>
+          <div class="price-item">
+            <span class="price-label">Output:</span>
+            <span class="price-value">${{outputPrice}}/1M tokens</span>
+          </div>
+        </div>
+      </div>
+    {{/each}}
+  </div>
+  
+  <!-- Hidden actual select for form submission -->
+  <select id="{{id}}" name="{{name}}" class="hidden-select" data-provider="{{selectedProvider}}">
+    {{#each options}}
+      <option value="{{value}}" data-provider="{{provider}}" {{#if selected}}selected{{/if}}>
+        {{title}}
+      </option>
+    {{/each}}
+  </select>
+</div>
+
+<style>
+  .custom-select-container {
+    position: relative;
+    width: 100%;
+    margin-bottom: 1.5rem;
+    font-family: var(--vscode-font-family);
+  }
+  
+  .select-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background-color: var(--vscode-dropdown-background);
+    border: 1px solid var(--vscode-dropdown-border);
+    border-radius: 4px;
+    cursor: pointer;
+    user-select: none;
+  }
+  
+  .dropdown-arrow {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s ease;
+  }
+  
+  .select-header.open .dropdown-arrow {
+    transform: rotate(180deg);
+  }
+  
+  .select-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 0;
+    overflow: hidden;
+    background-color: var(--vscode-dropdown-background);
+    border: 1px solid var(--vscode-dropdown-border);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    z-index: 10;
+    transition: max-height 0.3s ease, opacity 0.2s ease;
+    opacity: 0;
+  }
+  
+  .select-options.open {
+    max-height: 300px;
+    overflow-y: auto;
+    opacity: 1;
+  }
+  
+  .select-option {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--vscode-dropdown-border);
+  }
+  
+  .select-option:last-child {
+    border-bottom: none;
+  }
+  
+  .select-option:hover {
+    background-color: var(--vscode-list-hoverBackground);
+  }
+  
+  .option-main {
+    margin-bottom: 0.5rem;
+  }
+  
+  .option-title {
+    font-weight: bold;
+    color: var(--vscode-editor-foreground);
+    margin-bottom: 0.25rem;
+  }
+  
+  .option-description {
+    font-size: 0.85rem;
+    color: var(--vscode-descriptionForeground);
+  }
+  
+  .option-pricing {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+  }
+  
+  .price-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  
+  .price-label {
+    font-weight: bold;
+    color: var(--vscode-editor-foreground);
+  }
+  
+  .price-value {
+    color: var(--vscode-charts-blue);
+  }
+  
+  .hidden-select {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {    
+    document.querySelectorAll('.custom-select-container').forEach(container => {
+      const selectId = container.querySelector('.hidden-select').id;
+      const header = container.querySelector('.select-header');
+      const options = container.querySelector('.select-options');
+      const hiddenSelect = container.querySelector('.hidden-select');
+      const selectedText = container.querySelector('.selected-option-text');
+            
+      const initialSelected = hiddenSelect.options[hiddenSelect.selectedIndex];
+      if (initialSelected) {
+        selectedText.textContent = initialSelected.textContent;
+      }
+            
+      header.addEventListener('click', function() {
+        const isOpen = options.classList.contains('open');
+                
+        document.querySelectorAll('.select-options.open').forEach(el => {
+          if (el !== options) {
+            el.classList.remove('open');
+            el.closest('.custom-select-container').querySelector('.select-header').classList.remove('open');
+          }
+        });
+                
+        header.classList.toggle('open');
+        options.classList.toggle('open');
+      });
+            
+      container.querySelectorAll('.select-option').forEach(option => {
+        option.addEventListener('click', function() {
+          const value = this.dataset.value;
+          const title = this.querySelector('.option-title').textContent;
+                    
+          for (let i = 0; i < hiddenSelect.options.length; i++) {
+            if (hiddenSelect.options[i].value === value) {
+              hiddenSelect.selectedIndex = i;
+              break;
+            }
+          }
+                    
+          selectedText.textContent = title;
+                    
+          header.classList.remove('open');
+          options.classList.remove('open');
+                    
+          const event = new Event('change', { bubbles: true });
+          hiddenSelect.dispatchEvent(event);
+        });
+      });
+            
+      document.addEventListener('click', function(e) {
+        if (!container.contains(e.target)) {
+          header.classList.remove('open');
+          options.classList.remove('open');
+        }
+      });
+    });
+  });
+</script>

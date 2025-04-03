@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitComAI Configuration</title>
+    <style>
+        {{{cssContent}}}
+    </style>
+</head>
+<body>
+    {{> header}}
+
+    <div class="tabs">
+        <div class="tab active" data-tab="providers">AI Providers</div>
+        <div class="tab" data-tab="generation">Generation Settings</div>
+        <div class="tab" data-tab="advanced">Advanced</div>
+    </div>
+
+    <div class="tab-content active" id="providers-tab">
+        <div class="card">
+            <div class="card-header">
+                <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"></path>
+                    <path d="M8.5 8.5v.01"></path>
+                    <path d="M16 15.5v.01"></path>
+                    <path d="M12 12v.01"></path>
+                    <path d="M11 17v.01"></path>
+                    <path d="M7 14v.01"></path>
+                </svg>
+                <h2 class="card-title">Select AI Provider</h2>
+            </div>
+            <div class="form-group">
+                <label for="provider">AI Provider:</label>
+                <select id="provider">
+                    <option value="anthropic" {{#if isAnthropicSelected}}selected{{/if}}>Anthropic Claude</option>
+                    <option value="openai" {{#if isOpenAISelected}}selected{{/if}}>OpenAI</option>
+                    <option value="mistral" {{#if isMistralSelected}}selected{{/if}}>Mistral AI</option>
+                    <option value="ollama" {{#if isOllamaSelected}}selected{{/if}}>Ollama (Local)</option>
+                </select>
+            </div>
+        </div>
+
+        {{> provider-anthropic}}
+        {{> provider-openai}}
+        {{> provider-mistral}}
+        {{> provider-ollama}}
+    </div>
+
+    <div class="tab-content" id="generation-tab">
+        <div class="card">
+            <div class="card-header">
+                <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20.94c1.5 0 2.75 1.06 4 1.06 3 0 6-8 6-12.22A4.91 4.91 0 0 0 17 5c-2.22 0-4 1.44-5 2-1-.56-2.78-2-5-2a4.9 4.9 0 0 0-5 4.78C2 14 5 22 8 22c1.25 0 2.5-1.06 4-1.06Z"></path>
+                    <path d="M10 2c1 .5 2 2 2 5"></path>
+                </svg>
+                <h2 class="card-title">Generation Parameters</h2>
+            </div>
+            
+            <div class="form-group">
+                <label for="temperature">
+                    Temperature:
+                    <div class="tooltip">
+                        <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M12 16v-4"></path>
+                            <path d="M12 8h.01"></path>
+                        </svg>
+                        <span class="tooltip-text">Controls randomness: Lower values (0.1-0.3) for more deterministic outputs, higher values (0.7-1.0) for more creative outputs.</span>
+                    </div>
+                </label>
+                <div class="slider-container">
+                    <div class="slider-wrapper">
+                        <input type="range" id="temperature" min="0" max="1" step="0.05" value="{{temperature}}" class="slider" />
+                        <div class="slider-ticks">
+                            <span>0</span>
+                            <span>0.2</span>
+                            <span>0.4</span>
+                            <span>0.6</span>
+                            <span>0.8</span>
+                            <span>1</span>
+                        </div>
+                    </div>
+                    <input type="number" id="temperature-input" min="0" max="1" step="0.05" value="{{temperature}}" class="slider-value" />
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="max-tokens">
+                    Max Tokens:
+                    <div class="tooltip">
+                        <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M12 16v-4"></path>
+                            <path d="M12 8h.01"></path>
+                        </svg>
+                        <span class="tooltip-text">Maximum number of tokens to generate. Higher values allow for longer commit messages but may increase API costs.</span>
+                    </div>
+                </label>
+                <div class="slider-container">
+                    <div class="slider-wrapper">
+                        <input type="range" id="max-tokens" min="100" max="4000" step="100" value="{{maxTokens}}" class="slider" />
+                        <div class="slider-ticks">
+                            <span>100</span>
+                            <span>1000</span>
+                            <span>2000</span>
+                            <span>3000</span>
+                            <span>4000</span>
+                        </div>
+                    </div>
+                    <input type="number" id="max-tokens-input" min="100" max="4000" step="100" value="{{maxTokens}}" class="slider-value" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="advanced-tab">
+        <div class="card">
+            <div class="card-header">
+                <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <h2 class="card-title">Advanced Settings</h2>
+            </div>
+            
+            <div class="form-group">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="debug-mode" {{#if debug}}checked{{/if}} />
+                    <label for="debug-mode">
+                        Enable Debug Mode
+                        <div class="tooltip">
+                             <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M12 16v-4"></path>
+                                <path d="M12 8h.01"></path>
+                            </svg>
+                            <span class="tooltip-text">Enables detailed logging for troubleshooting. Use the "GitComAI: Show Logs" command to view logs.</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{> footer}}
+
+    <script>
+        (function() {
+            const vscode = acquireVsCodeApi();
+                        
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                                        
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                                        
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === `${tabId}-tab`) {
+                            content.classList.add('active');
+                        }
+                    });
+                });
+            });
+                        
+            const providerSelect = document.getElementById('provider');
+            const sections = {
+                'anthropic': document.getElementById('anthropic-section'),
+                'openai': document.getElementById('openai-section'),
+                'mistral': document.getElementById('mistral-section'),
+                'ollama': document.getElementById('ollama-section')
+            };
+                        
+            providerSelect.addEventListener('change', () => {
+                const selectedProvider = providerSelect.value;
+                                
+                Object.values(sections).forEach(section => {
+                    section.classList.remove('active');
+                });
+                                
+                sections[selectedProvider].classList.add('active');
+            });
+                        
+            const temperatureSlider = document.getElementById('temperature');
+            const temperatureInput = document.getElementById('temperature-input');
+            
+            temperatureSlider.addEventListener('input', () => {
+                const value = temperatureSlider.value;
+                temperatureInput.value = value;
+            });
+            
+            temperatureInput.addEventListener('input', () => {
+                const value = temperatureInput.value;
+                if (value >= 0 && value <= 1) {
+                    temperatureSlider.value = value;
+                }
+            });
+                        
+            const maxTokensSlider = document.getElementById('max-tokens');
+            const maxTokensInput = document.getElementById('max-tokens-input');
+            
+            maxTokensSlider.addEventListener('input', () => {
+                const value = maxTokensSlider.value;
+                maxTokensInput.value = value;
+            });
+            
+            maxTokensInput.addEventListener('input', () => {
+                const value = maxTokensInput.value;
+                if (value >= 100 && value <= 4000) {
+                    maxTokensSlider.value = value;
+                }
+            });
+                        
+            document.getElementById('show-logs-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                vscode.postMessage({
+                    command: 'showLogs'
+                });
+            });
+                        
+            document.getElementById('save-config').addEventListener('click', () => {
+                const provider = providerSelect.value;
+                                
+                let model;
+                switch (provider) {
+                    case 'anthropic':
+                        model = document.getElementById('anthropic-model').value;
+                        break;
+                    case 'openai':
+                        model = document.getElementById('openai-model').value;
+                        break;
+                    case 'mistral':
+                        model = document.getElementById('mistral-model').value;
+                        break;
+                    case 'ollama':
+                        model = document.getElementById('ollama-model').value;
+                        break;
+                }
+                
+                const config = {
+                    provider,
+                    model,
+                    anthropicApiKey: document.getElementById('anthropic-api-key').value,
+                    openaiApiKey: document.getElementById('openai-api-key').value,
+                    mistralApiKey: document.getElementById('mistral-api-key').value,
+                    ollamaBaseURL: document.getElementById('ollama-base-url').value,
+                    temperature: parseFloat(document.getElementById('temperature-input').value),
+                    maxTokens: parseInt(document.getElementById('max-tokens-input').value),
+                    debug: document.getElementById('debug-mode').checked
+                };
+                
+                vscode.postMessage({
+                    command: 'saveConfig',
+                    config
+                });
+                                
+                const saveButton = document.getElementById('save-config');
+                const originalText = saveButton.innerHTML;
+                saveButton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 6 9 17l-5-5"></path>
+                    </svg>
+                    Saved!
+                `;
+                
+                setTimeout(() => {
+                    saveButton.innerHTML = originalText;
+                }, 2000);
+            });
+
+             document.addEventListener('DOMContentLoaded', function() {
+            const ollamaModelSelect = document.getElementById('ollama-model');
+            const paramSizeElement = document.getElementById('ollama-param-size');
+            const quantizationElement = document.getElementById('ollama-quantization');
+            const sizeElement = document.getElementById('ollama-size');
+                        
+            if (ollamaModelSelect) {
+                ollamaModelSelect.addEventListener('change', function() {
+                    const selectedOption = ollamaModelSelect.options[ollamaModelSelect.selectedIndex];
+                    const modelName = selectedOption.value;
+                                        
+                    const ollamaModels = {{{json ollamaModels}}};
+                    const selectedModel = ollamaModels.find(model => model.name === modelName);
+                    
+                    if (selectedModel && paramSizeElement && quantizationElement && sizeElement) {
+                        paramSizeElement.textContent = selectedModel.parameterSize || 'N/A';
+                        quantizationElement.textContent = selectedModel.quantizationLevel || 'N/A';
+                        sizeElement.textContent = selectedModel.size || 'N/A';
+                    }
+                });
+            }
+                        
+            const connectButton = document.getElementById('connect-ollama');
+            const baseUrlInput = document.getElementById('ollama-base-url');
+            
+            if (connectButton && baseUrlInput) {
+                connectButton.addEventListener('click', function() {
+                    const baseUrl = baseUrlInput.value.trim();
+                    if (baseUrl) {                        
+                        vscode.postMessage({
+                            command: 'fetchOllamaModels',
+                            baseUrl: baseUrl
+                        });
+                                                
+                        const statusElement = document.getElementById('ollama-models-status');
+                        if (statusElement) {
+                            statusElement.textContent = 'Connecting to Ollama server...';
+                            statusElement.style.display = 'block';
+                            statusElement.className = 'status-message info';
+                        }
+                    }
+                });
+            }
+                        
+            const pullModelButton = document.getElementById('pull-ollama-model');
+            
+            if (pullModelButton) {
+                pullModelButton.addEventListener('click', function() {
+                    vscode.postMessage({
+                        command: 'showOllamaModelPullDialog'
+                    });
+                });
+            }
+                        
+            const refreshButton = document.getElementById('refresh-ollama-models');
+            
+            if (refreshButton && baseUrlInput) {
+                refreshButton.addEventListener('click', function() {
+                    const baseUrl = baseUrlInput.value.trim();
+                    if (baseUrl) {
+                        vscode.postMessage({
+                            command: 'fetchOllamaModels',
+                            baseUrl: baseUrl
+                        });
+                                                
+                        const statusElement = document.getElementById('ollama-models-status');
+                        if (statusElement) {
+                            statusElement.textContent = 'Refreshing model list...';
+                            statusElement.style.display = 'block';
+                            statusElement.className = 'status-message info';
+                        }
+                    }
+                });
+            }
+        });
+
+        window.addEventListener('message', event => {
+            const message = event.data;
+                        
+            if (message.command === 'ollamaModelsLoaded') {
+                const statusElement = document.getElementById('ollama-models-status');
+                if (statusElement) {
+                    if (message.success) {
+                        statusElement.textContent = `Successfully loaded ${message.count} models`;
+                        statusElement.className = 'status-message success';
+                                                
+                        setTimeout(() => {
+                            statusElement.style.display = 'none';
+                        }, 3000);
+                    } else {
+                        statusElement.textContent = `Error: ${message.error}`;
+                        statusElement.className = 'status-message error';
+                    }
+                }
+            }
+        
+            if (message.command === 'ollamaModelPulling') {
+                const statusElement = document.getElementById('ollama-models-status');
+                if (statusElement) {
+                    if (message.status === 'started') {
+                        statusElement.textContent = `Pulling model: ${message.modelName}...`;
+                        statusElement.className = 'status-message info';
+                        statusElement.style.display = 'block';
+                    } else if (message.status === 'completed') {
+                        statusElement.textContent = `Successfully pulled model: ${message.modelName}`;
+                        statusElement.className = 'status-message success';
+                                                
+                        setTimeout(() => {
+                            statusElement.style.display = 'none';
+                        }, 5000);
+                    } else if (message.status === 'failed') {
+                        statusElement.textContent = `Failed to pull model: ${message.error}`;
+                        statusElement.className = 'status-message error';
+                    }
+                }
+            }
+
+            if (message.command === 'ollamaModelPullingProgress') {
+                const statusElement = document.getElementById('ollama-models-status');
+                if (statusElement) {
+                    statusElement.textContent = message.message;
+                    statusElement.className = 'status-message info';
+                    statusElement.style.display = 'block';
+                                        
+                    let progressBar = document.getElementById('ollama-progress-bar');
+                    if (!progressBar) {
+                        progressBar = document.createElement('div');
+                        progressBar.id = 'ollama-progress-bar';
+                        progressBar.className = 'progress-bar';
+                        
+                        const progressInner = document.createElement('div');
+                        progressInner.className = 'progress-inner';
+                        progressBar.appendChild(progressInner);
+                        
+                        statusElement.parentNode.insertBefore(progressBar, statusElement.nextSibling);
+                    }
+                    
+                    const progressInner = progressBar.querySelector('.progress-inner');
+                    if (progressInner) {
+                        progressInner.style.width = `${message.progress}%`;
+                    }
+                }
+            }
+        });
+    })();
+    </script>
+</body>
+</html>

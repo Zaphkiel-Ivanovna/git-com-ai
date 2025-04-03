@@ -1,112 +1,125 @@
 import * as vscode from 'vscode';
-import { GitService } from './gitService';
-import { AnthropicService } from './anthropicService';
-import { UIHandler } from './uiHandler';
-import { logger } from './logger';
+import { GitService } from './services/git.service';
+import { AIService } from './services/ai.service';
+import { Logger } from './utils/logger.util';
+import { ConfigView } from './ui/config-view';
+import { GitExtension } from './@types/git';
+import { AIProvider, IModelConfig } from './@types/model.types';
+
+const logger = Logger.getInstance();
 
 export function activate(context: vscode.ExtensionContext): void {
-  logger.log('GitComAI extension activated');
+  try {
+    logger.log('GitComAI extension activated');
 
-  const gitService = new GitService();
-  const anthropicService = new AnthropicService();
-  const uiHandler = new UIHandler();
+    const gitService = new GitService();
+    const aiService = new AIService();
+    const configView = new ConfigView(context);
 
-  const disposable = vscode.commands.registerCommand(
-    'gitcomai.generateCommitMessage',
-    async () => {
-      logger.log('Command gitcomai.generateCommitMessage executed');
+    const config = vscode.workspace.getConfiguration('gitcomai');
+    const modelConfig: IModelConfig | undefined = config.get('selectedModel');
+    const provider = modelConfig?.provider || AIProvider.ANTHROPIC;
 
-      const apiKey = vscode.workspace
-        .getConfiguration('gitcomai')
-        .get<string>('anthropicApiKey');
-      if (!apiKey) {
-        logger.warn('Anthropic API key not configured');
-        const setApiKey = 'Set API Key';
-        const result = await vscode.window.showErrorMessage(
-          'Anthropic API key not configured. Please set it in the extension settings.',
-          setApiKey
-        );
+    const generateCommitMessageCmd = vscode.commands.registerCommand(
+      'gitcomai.generateCommitMessage',
+      async () => {
+        logger.log('Command gitcomai.generateCommitMessage executed');
 
-        if (result === setApiKey) {
-          vscode.commands.executeCommand(
-            'workbench.action.openSettings',
-            'gitcomai.anthropicApiKey'
-          );
-        }
-        return;
-      }
-
-      vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: 'Generating commit message...',
-          cancellable: false,
-        },
-        async (progress) => {
-          progress.report({ increment: 0, message: 'Getting git diff...' });
-          logger.log('Getting git diff');
-
-          const gitDiff = await gitService.getGitDiff();
-          if (!gitDiff) {
-            logger.warn('No git diff found');
-            return;
-          }
-
-          const stagedFiles = await gitService.getStagedFiles();
-          logger.log(`Found ${stagedFiles.length} staged files`);
-
-          progress.report({ increment: 30, message: 'Analyzing changes...' });
-          logger.log('Generating commit message with Anthropic API');
-
-          const commitMessage = await anthropicService.generateCommitMessage(
-            gitDiff.diff,
-            stagedFiles
-          );
-          if (!commitMessage) {
-            logger.error('Failed to generate commit message');
-            return;
-          }
-
-          progress.report({
-            increment: 70,
-            message: 'Processing commit message...',
-          });
-          logger.log('Commit message generated successfully');
-
-          const formattedMessage = uiHandler.formatCommitMessage(commitMessage);
+        try {
           const gitExtension =
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            vscode.extensions.getExtension<any>('vscode.git')?.exports;
-          if (gitExtension) {
-            const gitAPI = gitExtension.getAPI(1);
-            const repositories = gitAPI.repositories;
-
-            if (repositories.length > 0) {
-              const repository = repositories[0];
-              repository.inputBox.value = formattedMessage;
-              vscode.commands.executeCommand('workbench.scm.focus');
-              logger.log('Commit message inserted into Git input box');
-              vscode.window.showInformationMessage(
-                'Commit message generated and inserted'
-              );
-            } else {
-              logger.warn(
-                'No Git repositories found, copying to clipboard instead'
-              );
-              await uiHandler.copyToClipboard(formattedMessage);
-            }
-          } else {
-            logger.warn(
-              'Git extension not found, copying to clipboard instead'
-            );
-            await uiHandler.copyToClipboard(formattedMessage);
+            vscode.extensions.getExtension<GitExtension>('vscode.git')?.exports;
+          if (!gitExtension) {
+            vscode.window.showErrorMessage('Git extension not found');
+            return;
           }
+          const gitApi = gitExtension.getAPI(1);
+          if (!gitApi.repositories || gitApi.repositories.length === 0) {
+            vscode.window.showErrorMessage('No Git repository found');
+            return;
+          }
+        } catch (error) {
+          logger.error('Error checking Git repository', error);
+          vscode.window.showErrorMessage('Failed to verify Git repository');
+          return;
         }
-      );
-    }
-  );
 
-  context.subscriptions.push(disposable);
+        vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            cancellable: true,
+          },
+          async (progress, token) => {
+            try {
+              progress.report({ increment: 0, message: 'Getting git diff...' });
+              logger.log('Getting git diff');
+
+              const gitDiff = await gitService.getGitDiff();
+              if (!gitDiff) {
+                logger.warn('No git diff found');
+                return;
+              }
+
+              const stagedFiles = await gitService.getStagedFiles();
+              logger.log(`Found ${stagedFiles.length} staged files`);
+
+              progress.report({
+                increment: 30,
+                message: 'Starting AI generation...',
+              });
+
+              logger.log(`Generating commit message with ${provider} API`);
+
+              const commitMessage = await aiService.generateCommitMessage(
+                gitDiff,
+                stagedFiles,
+                progress,
+                token
+              );
+
+              if (!commitMessage) {
+                logger.error('Failed to generate commit message');
+                return;
+              }
+              logger.log('Commit message generation completed');
+
+              return new Promise<void>((resolve) => {
+                setTimeout(() => {
+                  resolve();
+                }, 5000);
+              });
+            } catch (error) {
+              logger.error('Error in commit message generation process', error);
+              vscode.window.showErrorMessage(
+                `Error generating commit message: ${
+                  error instanceof Error ? error.message : String(error)
+                }`
+              );
+            }
+          }
+        );
+      }
+    );
+
+    const showLogsCmd = vscode.commands.registerCommand(
+      'gitcomai.showLogs',
+      () => {
+        logger.show();
+      }
+    );
+
+    const openConfigCmd = vscode.commands.registerCommand(
+      'gitcomai.openConfig',
+      () => {
+        configView.show();
+      }
+    );
+
+    context.subscriptions.push(generateCommitMessageCmd);
+    context.subscriptions.push(showLogsCmd);
+    context.subscriptions.push(openConfigCmd);
+  } catch (err) {
+    logger.error('Error activating GitComAI extension', err);
+  }
 }
 
 export function deactivate(): void {
