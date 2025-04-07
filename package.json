@@ -2,7 +2,7 @@
   "name": "gitcomai",
   "displayName": "GitCom-AI",
   "description": "Generate commit messages using AI based on git diff",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "engines": {
     "vscode": "^1.95.0"
   },
@@ -102,8 +102,8 @@
         },
         "gitcomai.ollamaBaseURL": {
           "type": "string",
-          "default": "http://localhost:11434/api",
-          "description": "Base URL for Ollama API (default: http://localhost:11434/api)"
+          "default": "http://localhost:11434",
+          "description": "Base URL for Ollama API (default: http://localhost:11434)"
         },
         "gitcomai.temperature": {
           "type": "number",
@@ -159,6 +159,7 @@
     "@ai-sdk/openai": "^1.2.1",
     "ai": "^4.1.54",
     "handlebars": "^4.7.8",
+    "ollama": "^0.5.14",
     "ollama-ai-provider": "^1.2.0"
   }
 }

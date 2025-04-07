@@ -273,150 +273,166 @@
                 }, 2000);
             });
 
-             document.addEventListener('DOMContentLoaded', function() {
-            const ollamaModelSelect = document.getElementById('ollama-model');
-            const paramSizeElement = document.getElementById('ollama-param-size');
-            const quantizationElement = document.getElementById('ollama-quantization');
-            const sizeElement = document.getElementById('ollama-size');
-                        
-            if (ollamaModelSelect) {
-                ollamaModelSelect.addEventListener('change', function() {
-                    const selectedOption = ollamaModelSelect.options[ollamaModelSelect.selectedIndex];
-                    const modelName = selectedOption.value;
-                                        
-                    const ollamaModels = {{{json ollamaModels}}};
-                    const selectedModel = ollamaModels.find(model => model.name === modelName);
-                    
-                    if (selectedModel && paramSizeElement && quantizationElement && sizeElement) {
-                        paramSizeElement.textContent = selectedModel.parameterSize || 'N/A';
-                        quantizationElement.textContent = selectedModel.quantizationLevel || 'N/A';
-                        sizeElement.textContent = selectedModel.size || 'N/A';
+            document.addEventListener('DOMContentLoaded', function() {
+              // Éléments UI
+              const ollamaBaseUrl = document.getElementById('ollama-base-url');
+              const ollamaModel = document.getElementById('ollama-model');
+              const connectOllama = document.getElementById('connect-ollama');
+              const refreshOllamaModels = document.getElementById('refresh-ollama-models');
+              const pullOllamaModel = document.getElementById('pull-ollama-model');
+              const ollamaModelsStatus = document.getElementById('ollama-models-status');
+              const ollamaParamSize = document.getElementById('ollama-param-size');
+              const ollamaQuantization = document.getElementById('ollama-quantization');
+              const ollamaModelSize = document.getElementById('ollama-model-size');
+
+              // Variable pour suivre l'état du pull
+              let isPullingModel = false;
+              let statusHideTimeout = null;
+
+              // Mettre à jour les détails du modèle lorsqu'un modèle est sélectionné
+              if (ollamaModel) {
+                ollamaModel.addEventListener('change', function() {
+                  const selectedIndex = this.selectedIndex;
+                  if (selectedIndex >= 0) {
+                    const models = {{{json ollamaModels}}};
+                    if (models && models.length > selectedIndex) {
+                      const model = models[selectedIndex];
+                      if (ollamaParamSize) ollamaParamSize.textContent = model.parameterSize || 'Unknown';
+                      if (ollamaQuantization) ollamaQuantization.textContent = model.quantizationLevel || 'None';
+                      if (ollamaModelSize) ollamaModelSize.textContent = model.size || 'Unknown';
                     }
+                  }
                 });
-            }
-                        
-            const connectButton = document.getElementById('connect-ollama');
-            const baseUrlInput = document.getElementById('ollama-base-url');
-            
-            if (connectButton && baseUrlInput) {
-                connectButton.addEventListener('click', function() {
-                    const baseUrl = baseUrlInput.value.trim();
-                    if (baseUrl) {                        
-                        vscode.postMessage({
-                            command: 'fetchOllamaModels',
-                            baseUrl: baseUrl
-                        });
-                                                
-                        const statusElement = document.getElementById('ollama-models-status');
-                        if (statusElement) {
-                            statusElement.textContent = 'Connecting to Ollama server...';
-                            statusElement.style.display = 'block';
-                            statusElement.className = 'status-message info';
-                        }
-                    }
-                });
-            }
-                        
-            const pullModelButton = document.getElementById('pull-ollama-model');
-            
-            if (pullModelButton) {
-                pullModelButton.addEventListener('click', function() {
+              }
+
+              // Connecter à Ollama
+              if (connectOllama) {
+                connectOllama.addEventListener('click', function() {
+                  const baseUrl = ollamaBaseUrl.value.trim();
+                  if (baseUrl) {
+                    showStatus('Connecting to Ollama server...', 'info');
                     vscode.postMessage({
-                        command: 'showOllamaModelPullDialog'
+                      command: 'fetchOllamaModels',
+                      baseUrl: baseUrl
                     });
+                  } else {
+                    showStatus('Please enter a valid Ollama base URL', 'error');
+                  }
                 });
-            }
-                        
-            const refreshButton = document.getElementById('refresh-ollama-models');
-            
-            if (refreshButton && baseUrlInput) {
-                refreshButton.addEventListener('click', function() {
-                    const baseUrl = baseUrlInput.value.trim();
-                    if (baseUrl) {
-                        vscode.postMessage({
-                            command: 'fetchOllamaModels',
-                            baseUrl: baseUrl
-                        });
-                                                
-                        const statusElement = document.getElementById('ollama-models-status');
-                        if (statusElement) {
-                            statusElement.textContent = 'Refreshing model list...';
-                            statusElement.style.display = 'block';
-                            statusElement.className = 'status-message info';
-                        }
-                    }
-                });
-            }
-        });
+              }
 
-        window.addEventListener('message', event => {
-            const message = event.data;
-                        
-            if (message.command === 'ollamaModelsLoaded') {
-                const statusElement = document.getElementById('ollama-models-status');
-                if (statusElement) {
-                    if (message.success) {
-                        statusElement.textContent = `Successfully loaded ${message.count} models`;
-                        statusElement.className = 'status-message success';
-                                                
-                        setTimeout(() => {
-                            statusElement.style.display = 'none';
-                        }, 3000);
+              // Rafraîchir la liste des modèles
+              if (refreshOllamaModels) {
+                refreshOllamaModels.addEventListener('click', function() {
+                  showStatus('Refreshing Ollama models...', 'info');
+                  vscode.postMessage({
+                    command: 'fetchOllamaModels'
+                  });
+                });
+              }
+
+              // Télécharger un nouveau modèle
+              if (pullOllamaModel) {
+                pullOllamaModel.addEventListener('click', function() {
+                  vscode.postMessage({
+                    command: 'showOllamaModelPullDialog'
+                  });
+                });
+              }
+
+              // Afficher un message de statut
+              function showStatus(message, type = 'info', persistent = false) {
+                if (ollamaModelsStatus) {
+                  ollamaModelsStatus.textContent = message;
+                  ollamaModelsStatus.className = `status-message ${type}`;
+                  ollamaModelsStatus.style.display = 'block';
+
+                  // Si nous sommes en train de pull un modèle, ne pas masquer le message
+                  // sauf si c'est explicitement demandé (fin du pull)
+                  if (!isPullingModel || persistent === false) {
+                    // Annuler tout timer existant
+                    if (statusHideTimeout) {
+                      clearTimeout(statusHideTimeout);
+                    }
+
+                    // Masquer le message après 5 secondes seulement si ce n'est pas un message de progression
+                    if (!persistent) {
+                      statusHideTimeout = setTimeout(() => {
+                        ollamaModelsStatus.style.display = 'none';
+                        statusHideTimeout = null;
+                      }, 5000);
+                    }
+                  }
+                }
+              }
+
+              // Écouter les messages du webview
+              window.addEventListener('message', event => {
+                const message = event.data;
+
+                switch (message.command) {
+                  case 'ollamaModelsLoading':
+                    showStatus('Loading Ollama models...', 'info');
+                    if (ollamaModel) ollamaModel.disabled = true;
+                    break;
+
+                  case 'ollamaModelsLoaded':
+                    if (message.error) {
+                      showStatus(`Error loading models: ${message.error}`, 'error');
                     } else {
-                        statusElement.textContent = `Error: ${message.error}`;
-                        statusElement.className = 'status-message error';
-                    }
-                }
-            }
-        
-            if (message.command === 'ollamaModelPulling') {
-                const statusElement = document.getElementById('ollama-models-status');
-                if (statusElement) {
-                    if (message.status === 'started') {
-                        statusElement.textContent = `Pulling model: ${message.modelName}...`;
-                        statusElement.className = 'status-message info';
-                        statusElement.style.display = 'block';
-                    } else if (message.status === 'completed') {
-                        statusElement.textContent = `Successfully pulled model: ${message.modelName}`;
-                        statusElement.className = 'status-message success';
-                                                
-                        setTimeout(() => {
-                            statusElement.style.display = 'none';
-                        }, 5000);
-                    } else if (message.status === 'failed') {
-                        statusElement.textContent = `Failed to pull model: ${message.error}`;
-                        statusElement.className = 'status-message error';
-                    }
-                }
-            }
+                      showStatus(`Loaded ${message.count} Ollama models`, 'success');
 
-            if (message.command === 'ollamaModelPullingProgress') {
-                const statusElement = document.getElementById('ollama-models-status');
-                if (statusElement) {
-                    statusElement.textContent = message.message;
-                    statusElement.className = 'status-message info';
-                    statusElement.style.display = 'block';
-                                        
-                    let progressBar = document.getElementById('ollama-progress-bar');
-                    if (!progressBar) {
-                        progressBar = document.createElement('div');
-                        progressBar.id = 'ollama-progress-bar';
-                        progressBar.className = 'progress-bar';
-                        
-                        const progressInner = document.createElement('div');
-                        progressInner.className = 'progress-inner';
-                        progressBar.appendChild(progressInner);
-                        
-                        statusElement.parentNode.insertBefore(progressBar, statusElement.nextSibling);
+                      // Mettre à jour la liste des modèles
+                      if (ollamaModel) {
+                        ollamaModel.innerHTML = '';
+                        if (message.models && message.models.length > 0) {
+                          message.models.forEach(model => {
+                            const option = document.createElement('option');
+                            option.value = model.name;
+                            option.textContent = model.name;
+                            ollamaModel.appendChild(option);
+                          });
+
+                          // Mettre à jour les détails du premier modèle
+                          if (message.models[0]) {
+                            if (ollamaParamSize) ollamaParamSize.textContent = message.models[0].parameterSize || 'Unknown';
+                            if (ollamaQuantization) ollamaQuantization.textContent = message.models[0].quantizationLevel || 'None';
+                            if (ollamaModelSize) ollamaModelSize.textContent = message.models[0].size || 'Unknown';
+                          }
+
+                          ollamaModel.disabled = false;
+                        } else {
+                          const option = document.createElement('option');
+                          option.value = '';
+                          option.textContent = 'No models available';
+                          ollamaModel.appendChild(option);
+                          ollamaModel.disabled = true;
+                        }
+                      }
                     }
-                    
-                    const progressInner = progressBar.querySelector('.progress-inner');
-                    if (progressInner) {
-                        progressInner.style.width = `${message.progress}%`;
+                    break;
+
+                  case 'ollamaModelPulling':
+                    if (message.status === 'started') {
+                      isPullingModel = true;
+                      showStatus(`Started pulling model: ${message.modelName}`, 'info', true);
+                    } else if (message.status === 'completed') {
+                      isPullingModel = false;
+                      showStatus(`Successfully pulled model: ${message.modelName}`, 'success', false);
+                    } else if (message.status === 'error') {
+                      isPullingModel = false;
+                      showStatus(`Error pulling model: ${message.error}`, 'error', false);
                     }
+                    break;
+
+                  case 'ollamaModelPullingProgress':
+                    if (isPullingModel) {
+                      showStatus(`${message.message}`, 'info', true);
+                    }
+                    break;
                 }
-            }
-        });
+              });
+            });             
     })();
     </script>
 </body>

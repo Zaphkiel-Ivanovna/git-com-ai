@@ -8,16 +8,14 @@ import {
   IModelConfig,
   AIProvider,
   AnthropicModel,
-  MistralModel,
-  OpenAIModel,
   ANTHROPIC_MODEL_DETAILS,
   MISTRAL_MODEL_DETAILS,
   OPENAI_MODEL_DETAILS,
 } from '../@types/model.types';
-import { IOllamaTagsResponse, IOllamaModel } from '../@types/ollama.types';
+import { ollamaService } from '../services/ollama.service';
 
 export class ConfigView {
-  private panel: vscode.WebviewPanel | undefined;
+  private webviewPanel: vscode.WebviewPanel | undefined;
   private context: vscode.ExtensionContext;
   private ollamaModels: {
     name: string;
@@ -125,6 +123,73 @@ export class ConfigView {
     );
   }
 
+  private async fetchOllamaModels(): Promise<void> {
+    try {
+      logger.debug('Starting to fetch Ollama models');
+
+      if (!this.webviewPanel) {
+        logger.error(
+          'Webview panel is undefined when trying to fetch Ollama models'
+        );
+        return;
+      }
+
+      try {
+        this.webviewPanel.webview.postMessage({
+          command: 'ollamaModelsLoading',
+        });
+        logger.debug('Sent ollamaModelsLoading message to webview');
+      } catch (postError) {
+        logger.error('Error posting ollamaModelsLoading message', postError);
+      }
+
+      try {
+        const models = await ollamaService.fetchModels();
+        logger.debug(`Received ${models.length} models from Ollama service`);
+
+        this.ollamaModels = models.map((model) => {
+          logger.debug(`Processing model: ${model.name}`);
+          return {
+            name: model.name,
+            size: formatSize(model.size),
+            parameterSize: model.details?.parameter_size || 'Unknown',
+            quantizationLevel: model.details?.quantization_level || 'None',
+          };
+        });
+        logger.debug(`Processed ${this.ollamaModels.length} Ollama models`);
+
+        this.webviewPanel.webview.postMessage({
+          command: 'ollamaModelsLoaded',
+          count: this.ollamaModels.length,
+          models: this.ollamaModels,
+        });
+        logger.debug('Sent ollamaModelsLoaded message to webview');
+
+        try {
+          this.updateWebviewContent();
+          logger.debug('Updated webview content');
+        } catch (updateError) {
+          logger.error('Error updating webview content', updateError);
+        }
+      } catch (fetchError) {
+        logger.error('Error in ollamaService.fetchModels()', fetchError);
+
+        this.webviewPanel.webview.postMessage({
+          command: 'ollamaModelsLoaded',
+          error:
+            fetchError instanceof Error
+              ? fetchError.message
+              : String(fetchError),
+          count: 0,
+          models: [],
+        });
+        logger.debug('Sent error message to webview');
+      }
+    } catch (error) {
+      logger.error('Unexpected error in fetchOllamaModels', error);
+    }
+  }
+
   private async showOllamaModelPullDialog(): Promise<void> {
     const modelName = await vscode.window.showInputBox({
       prompt:
@@ -141,12 +206,8 @@ export class ConfigView {
       return;
     }
 
-    const config = vscode.workspace.getConfiguration('gitcomai');
-    const ollamaBaseURL =
-      config.get<string>('ollamaBaseURL') || 'http://localhost:11434/api';
-
     try {
-      this.panel?.webview.postMessage({
+      this.webviewPanel?.webview.postMessage({
         command: 'ollamaModelPulling',
         modelName,
         status: 'started',
@@ -159,118 +220,56 @@ export class ConfigView {
           cancellable: false,
         },
         async (progress) => {
-          let apiUrl = ollamaBaseURL;
-          if (!apiUrl.endsWith('/api')) {
-            apiUrl = apiUrl.endsWith('/') ? `${apiUrl}api` : `${apiUrl}/api`;
+          try {
+            await ollamaService.pullModel(modelName, (progressData) => {
+              progress.report({
+                increment:
+                  progressData.progressPercent > 0
+                    ? progressData.progressPercent / 100
+                    : undefined,
+                message: progressData.progressMessage,
+              });
+
+              this.webviewPanel?.webview.postMessage({
+                command: 'ollamaModelPullingProgress',
+                modelName,
+                status: 'downloading',
+                progress: progressData.progressPercent,
+                message: progressData.progressMessage,
+              });
+            });
+
+            await this.fetchOllamaModels();
+
+            this.webviewPanel?.webview.postMessage({
+              command: 'ollamaModelPulling',
+              modelName,
+              status: 'completed',
+            });
+
+            vscode.window.showInformationMessage(
+              `Successfully pulled Ollama model: ${modelName}`
+            );
+          } catch (error) {
+            this.webviewPanel?.webview.postMessage({
+              command: 'ollamaModelPulling',
+              modelName,
+              status: 'error',
+              error: error instanceof Error ? error.message : String(error),
+            });
+
+            vscode.window.showErrorMessage(
+              `Failed to pull Ollama model: ${
+                error instanceof Error ? error.message : String(error)
+              }`
+            );
           }
-
-          const pullUrl = `${apiUrl}/pull`;
-
-          const response = await fetch(pullUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ name: modelName, stream: true }),
-          });
-
-          if (!response.ok) {
-            throw new Error(`Failed to pull model: ${response.statusText}`);
-          }
-
-          const reader = response.body?.getReader();
-          if (!reader) {
-            throw new Error('Failed to get response reader');
-          }
-
-          const decoder = new TextDecoder();
-          let downloadedSize = 0;
-          let totalSize = 0;
-          let lastStatus = '';
-          let done = false;
-
-          while (!done) {
-            const result = await reader.read();
-            done = result.done;
-
-            if (done) {
-              break;
-            }
-
-            const chunk = decoder.decode(result.value, { stream: true });
-            const lines = chunk.split('\n').filter((line) => line.trim());
-
-            for (const line of lines) {
-              try {
-                const data = JSON.parse(line);
-
-                if (data.status) {
-                  lastStatus = data.status;
-                }
-
-                if (data.total) {
-                  totalSize = parseInt(data.total, 10);
-                }
-
-                if (data.completed) {
-                  downloadedSize = parseInt(data.completed, 10);
-                }
-
-                let progressMessage = lastStatus;
-                let progressPercent = 0;
-
-                if (totalSize > 0 && downloadedSize > 0) {
-                  progressPercent = (downloadedSize / totalSize) * 100;
-
-                  const downloadedFormatted = formatSize(downloadedSize);
-                  const totalFormatted = formatSize(totalSize);
-                  progressMessage = `${lastStatus} - ${downloadedFormatted} / ${totalFormatted} (${progressPercent.toFixed(
-                    1
-                  )}%)`;
-                }
-
-                progress.report({
-                  increment:
-                    progressPercent > 0 ? progressPercent / 100 : undefined,
-                  message: progressMessage,
-                });
-
-                this.panel?.webview.postMessage({
-                  command: 'ollamaModelPullingProgress',
-                  modelName,
-                  status: 'downloading',
-                  progress: progressPercent,
-                  message: progressMessage,
-                });
-              } catch (parseError) {
-                console.warn('Error parsing JSON from stream:', parseError);
-              }
-            }
-          }
-
-          await this.fetchOllamaModels(ollamaBaseURL);
-
-          this.panel?.webview.postMessage({
-            command: 'ollamaModelPulling',
-            modelName,
-            status: 'completed',
-          });
         }
       );
-
-      vscode.window.showInformationMessage(
-        `Successfully pulled Ollama model: ${modelName}`
-      );
     } catch (error) {
-      this.panel?.webview.postMessage({
-        command: 'ollamaModelPulling',
-        modelName,
-        status: 'failed',
-        error: error instanceof Error ? error.message : String(error),
-      });
-
+      logger.error('Error pulling Ollama model', error);
       vscode.window.showErrorMessage(
-        `Failed to pull Ollama model: ${
+        `Error pulling Ollama model: ${
           error instanceof Error ? error.message : String(error)
         }`
       );
@@ -278,121 +277,60 @@ export class ConfigView {
   }
 
   public async show(): Promise<void> {
-    if (this.panel) {
-      this.panel.reveal();
-      return;
-    }
-
-    this.panel = vscode.window.createWebviewPanel(
-      'gitcomaiConfig',
-      'GitComAI Configuration',
-      vscode.ViewColumn.One,
-      {
-        enableScripts: true,
-        retainContextWhenHidden: true,
+    try {
+      if (this.webviewPanel) {
+        this.webviewPanel.reveal(vscode.ViewColumn.One);
+        return;
       }
-    );
 
-    this.panel.webview.html = this.getWebviewContent();
+      this.webviewPanel = vscode.window.createWebviewPanel(
+        'gitcomaiConfig',
+        'Git Commit AI Configuration',
+        vscode.ViewColumn.One,
+        {
+          enableScripts: true,
+          retainContextWhenHidden: true,
+        }
+      );
 
-    this.panel.webview.onDidReceiveMessage(
-      async (message) => {
+      this.webviewPanel.onDidDispose(() => {
+        this.webviewPanel = undefined;
+      });
+
+      this.webviewPanel.webview.onDidReceiveMessage(async (message) => {
         switch (message.command) {
           case 'saveConfig':
             await this.saveConfig(message.config);
-            vscode.window.showInformationMessage(
-              'GitComAI configuration saved successfully!'
-            );
-            break;
-          case 'showLogs':
-            vscode.commands.executeCommand('gitcomai.showLogs');
+            vscode.window.showInformationMessage('Configuration saved');
             break;
           case 'fetchOllamaModels':
-            await this.fetchOllamaModels(message.baseUrl);
+            await this.fetchOllamaModels();
+            break;
+          case 'showLogs':
+            logger.show();
             break;
           case 'showOllamaModelPullDialog':
             await this.showOllamaModelPullDialog();
             break;
         }
-      },
-      undefined,
-      this.context.subscriptions
-    );
-
-    this.panel.onDidDispose(() => {
-      this.panel = undefined;
-    });
-
-    const config = vscode.workspace.getConfiguration('gitcomai');
-    const ollamaBaseURL =
-      config.get<string>('ollamaBaseURL') || 'http://localhost:11434/api';
-    await this.fetchOllamaModels(ollamaBaseURL);
-  }
-
-  private async fetchOllamaModels(baseUrl: string): Promise<void> {
-    try {
-      this.panel?.webview.postMessage({
-        command: 'ollamaModelsLoading',
-        loading: true,
-      });
-
-      let apiUrl = baseUrl;
-      if (!apiUrl.endsWith('/api')) {
-        apiUrl = apiUrl.endsWith('/') ? `${apiUrl}api` : `${apiUrl}/api`;
-      }
-
-      const modelsUrl = `${apiUrl}/tags`;
-
-      const response = await fetch(modelsUrl);
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch models: ${response.statusText}`);
-      }
-
-      const data = (await response.json()) as IOllamaTagsResponse;
-
-      if (data && Array.isArray(data.models)) {
-        this.ollamaModels = data.models.map((model: IOllamaModel) => ({
-          name: model.name,
-          size: formatSize(model.size),
-          parameterSize: model.details.parameter_size || 'Unknown',
-          quantizationLevel: model.details.quantization_level || 'None',
-          family: model.details.family || 'Unknown',
-          format: model.details.format || 'Unknown',
-        }));
-
-        this.updateWebviewContent();
-
-        this.panel?.webview.postMessage({
-          command: 'ollamaModelsLoaded',
-          success: true,
-          count: this.ollamaModels.length,
-          models: this.ollamaModels,
-        });
-
-        const configuration = vscode.workspace.getConfiguration('gitcomai');
-        await configuration.update(
-          'ollamaBaseURL',
-          baseUrl,
-          vscode.ConfigurationTarget.Global
-        );
-      } else {
-        throw new Error('Invalid response format from Ollama API');
-      }
-    } catch (error) {
-      this.panel?.webview.postMessage({
-        command: 'ollamaModelsLoaded',
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
       });
 
       this.updateWebviewContent();
+
+      await this.fetchOllamaModels();
+    } catch (error) {
+      logger.error('Error showing config view', error);
+      vscode.window.showErrorMessage(
+        `Error showing configuration: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
   private updateWebviewContent(): void {
-    if (this.panel) {
-      this.panel.webview.html = this.getWebviewContent();
+    if (this.webviewPanel) {
+      this.webviewPanel.webview.html = this.getWebviewContent();
     }
   }
 
@@ -420,79 +358,67 @@ export class ConfigView {
       const config = vscode.workspace.getConfiguration('gitcomai');
       const modelConfig = config.get<IModelConfig>('selectedModel') || {
         provider: AIProvider.ANTHROPIC,
-        model: AnthropicModel.CLAUDE_3_SONNET,
+        model: AnthropicModel.CLAUDE_3_7_SONNET,
       };
 
-      const anthropicModelOptions = Object.keys(AnthropicModel).map((key) => {
-        const modelValue = AnthropicModel[key as keyof typeof AnthropicModel];
-        const modelDetails = ANTHROPIC_MODEL_DETAILS[modelValue];
-        return {
-          value: modelValue,
-          title: modelDetails.title,
-          description: modelDetails.description,
-          inputPrice: modelDetails.inputPrice,
-          outputPrice: modelDetails.outputPrice,
-          provider: AIProvider.ANTHROPIC,
-          selected: modelConfig.model === modelValue,
-        };
-      });
+      const openaiModelOptions = Object.entries(OPENAI_MODEL_DETAILS).map(
+        ([modelValue, modelDetails]) => {
+          return {
+            ...modelDetails,
+            value: modelValue,
+            provider: AIProvider.OPENAI,
+            selected: modelConfig.model === modelValue,
+          };
+        }
+      );
 
-      const openaiModelOptions = Object.keys(OpenAIModel).map((key) => {
-        const modelValue = OpenAIModel[key as keyof typeof OpenAIModel];
-        const modelDetails = OPENAI_MODEL_DETAILS[modelValue];
-        return {
-          value: modelValue,
-          title: modelDetails.title,
-          description: modelDetails.description,
-          inputPrice: modelDetails.inputPrice,
-          outputPrice: modelDetails.outputPrice,
-          provider: AIProvider.OPENAI,
-          selected: modelConfig.model === modelValue,
-        };
-      });
+      const anthropicModelOptions = Object.entries(ANTHROPIC_MODEL_DETAILS).map(
+        ([modelValue, modelDetails]) => {
+          return {
+            ...modelDetails,
+            value: modelValue,
+            provider: AIProvider.ANTHROPIC,
+            selected: modelConfig.model === modelValue,
+          };
+        }
+      );
 
-      const mistralModelOptions = Object.keys(MistralModel).map((key) => {
-        const modelValue = MistralModel[key as keyof typeof MistralModel];
-        const modelDetails = MISTRAL_MODEL_DETAILS[modelValue];
-        return {
-          value: modelValue,
-          title: modelDetails.title,
-          description: modelDetails.description,
-          inputPrice: modelDetails.inputPrice,
-          outputPrice: modelDetails.outputPrice,
-          provider: AIProvider.MISTRAL,
-          selected: modelConfig.model === modelValue,
-        };
-      });
+      const mistralModelOptions = Object.entries(MISTRAL_MODEL_DETAILS).map(
+        ([modelValue, modelDetails]) => {
+          return {
+            ...modelDetails,
+            value: modelValue,
+            provider: AIProvider.MISTRAL,
+            selected: modelConfig.model === modelValue,
+          };
+        }
+      );
 
       return compiledTemplate({
         cssContent,
 
         modelConfig,
 
-        isAnthropicSelected: modelConfig.provider === 'anthropic',
-        isOpenAISelected: modelConfig.provider === 'openai',
-        isMistralSelected: modelConfig.provider === 'mistral',
-        isOllamaSelected: modelConfig.provider === 'ollama',
+        isAnthropicSelected: modelConfig.provider === AIProvider.ANTHROPIC,
+        isOpenAISelected: modelConfig.provider === AIProvider.OPENAI,
+        isMistralSelected: modelConfig.provider === AIProvider.MISTRAL,
+        isOllamaSelected: modelConfig.provider === AIProvider.OLLAMA,
 
         anthropicModelSelector: {
           id: 'anthropic-model',
           name: 'anthropic-model',
-          label: 'Model:',
           selectedProvider: AIProvider.ANTHROPIC,
           options: anthropicModelOptions,
         },
         openaiModelSelector: {
           id: 'openai-model',
           name: 'openai-model',
-          label: 'Model:',
           selectedProvider: AIProvider.OPENAI,
           options: openaiModelOptions,
         },
         mistralModelSelector: {
           id: 'mistral-model',
           name: 'mistral-model',
-          label: 'Model:',
           selectedProvider: AIProvider.MISTRAL,
           options: mistralModelOptions,
         },
@@ -501,7 +427,7 @@ export class ConfigView {
         openaiApiKey: config.get<string>('openaiApiKey') || '',
         mistralApiKey: config.get<string>('mistralApiKey') || '',
         ollamaBaseURL:
-          config.get<string>('ollamaBaseURL') || 'http://localhost:11434/api',
+          config.get<string>('ollamaBaseURL') || 'http://localhost:11434',
         ollamaModels: this.ollamaModels,
         temperature: config.get<number>('temperature') || 0.2,
         maxTokens: config.get<number>('maxTokens') || 1000,

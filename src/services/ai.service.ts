@@ -3,7 +3,6 @@ import { streamObject } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createMistral } from '@ai-sdk/mistral';
-import { createOllama } from 'ollama-ai-provider';
 import { logger } from '../utils/logger.util';
 import {
   commitMessageSchema,
@@ -19,6 +18,7 @@ import {
 import { calculateCost } from '../utils/cost.util';
 import { formatCommitMessage } from '../utils/format.util';
 import { GitExtension, InputBox } from '../@types/git';
+import { ollamaService } from './ollama.service';
 
 export class AIService {
   private apiKeys: Record<string, string | undefined> = {
@@ -26,11 +26,9 @@ export class AIService {
     openai: undefined,
     mistral: undefined,
   };
-  private ollamaBaseURL: string | undefined;
 
   constructor() {
     this.loadApiKeys();
-    this.loadOllamaConfig();
 
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('gitcomai')) {
@@ -50,20 +48,9 @@ export class AIService {
     logger.debug('API keys loaded');
   }
 
-  private loadOllamaConfig(): void {
-    const config = vscode.workspace.getConfiguration('gitcomai');
-    this.ollamaBaseURL = config.get<string>('ollamaBaseURL');
-    logger.debug(
-      `Ollama base URL: ${
-        this.ollamaBaseURL || 'default (http://localhost:11434/api)'
-      }`
-    );
-  }
-
   public reinitialize(): void {
     logger.debug('Reinitializing AI service');
     this.loadApiKeys();
-    this.loadOllamaConfig();
   }
 
   private getModelInstance(modelConfig: IModelConfig) {
@@ -99,11 +86,7 @@ export class AIService {
       }
 
       case AIProvider.OLLAMA: {
-        const options = this.ollamaBaseURL
-          ? { baseURL: this.ollamaBaseURL }
-          : undefined;
-
-        const ollama = createOllama(options);
+        const ollama = ollamaService.getProvider();
         return { model, provider: ollama };
       }
 
@@ -160,10 +143,9 @@ export class AIService {
         const { model, provider } = this.getModelInstance(modelConfig);
 
         const gitInputBox = this.getGitInputBox();
-
         let commitMessage: ICommitMessage = {
-          emoji: '',
-          type: '',
+          emoji: '' as never,
+          type: '' as never,
           scope: '',
           description: '',
           body: [],
@@ -184,6 +166,13 @@ export class AIService {
               temperature: config.temperature,
               prompt: `${prompts.systemPrompt}\n\n${prompts.userPrompt}`,
               abortSignal: controller.signal,
+              onError: (error) => {
+                logger.error(
+                  'Error generating commit message',
+                  JSON.stringify(error)
+                );
+                reject(error);
+              },
               onFinish: ({ usage, object }) => {
                 logger.debug(`Usage: ${JSON.stringify(usage)}`);
 
