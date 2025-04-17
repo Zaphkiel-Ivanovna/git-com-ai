@@ -337,6 +337,13 @@ export class ConfigView {
   private updateWebviewContent(): void {
     if (this.webviewPanel) {
       this.webviewPanel.webview.html = this.getWebviewContent();
+      
+      // Give the webview time to load, then ensure custom selects are initialized
+      setTimeout(() => {
+        this.webviewPanel?.webview.postMessage({
+          command: 'ready'
+        });
+      }, 500);
     }
   }
 

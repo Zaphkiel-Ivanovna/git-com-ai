@@ -279,8 +279,18 @@
                     saveButton.innerHTML = originalText;
                 }, 2000);
             });
-
+            
+            // Initialize custom select boxes immediately and after DOMContentLoaded
+            if (typeof window.initCustomSelects === 'function') {
+                window.initCustomSelects();
+            }
+            
             document.addEventListener('DOMContentLoaded', function() {
+              // Initialize custom select boxes again after DOM is fully loaded
+              if (typeof window.initCustomSelects === 'function') {
+                  window.initCustomSelects();
+              }
+              
               // Éléments UI
               const ollamaBaseUrl = document.getElementById('ollama-base-url');
               const ollamaModel = document.getElementById('ollama-model');
@@ -378,6 +388,13 @@
                 const message = event.data;
 
                 switch (message.command) {
+                  case 'ready':
+                    // Re-initialize custom select boxes after webview is ready
+                    if (typeof window.initCustomSelects === 'function') {
+                        window.initCustomSelects();
+                    }
+                    break;
+                    
                   case 'ollamaModelsLoading':
                     showStatus('Loading Ollama models...', 'info');
                     if (ollamaModel) ollamaModel.disabled = true;
@@ -417,6 +434,11 @@
                         }
                       }
                     }
+                    
+                    // Re-initialize custom select boxes after content update
+                    if (typeof window.initCustomSelects === 'function') {
+                        window.initCustomSelects();
+                    }
                     break;
 
                   case 'ollamaModelPulling':
@@ -439,7 +461,17 @@
                     break;
                 }
               });
-            });             
+            });
+            
+            // Add mutation observer to reinitialize custom selects when DOM changes
+            const observer = new MutationObserver((mutations) => {
+                if (typeof window.initCustomSelects === 'function') {
+                    window.initCustomSelects();
+                }
+            });
+            
+            // Start observing the document with the configured parameters
+            observer.observe(document.body, { childList: true, subtree: true });
     })();
     </script>
 </body>

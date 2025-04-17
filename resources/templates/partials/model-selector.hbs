@@ -157,7 +157,8 @@
 </style>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {    
+  // Initialize custom select boxes
+  function initCustomSelects() {
     document.querySelectorAll('.custom-select-container').forEach(container => {
       const selectId = container.querySelector('.hidden-select').id;
       const header = container.querySelector('.select-header');
@@ -213,5 +214,11 @@
         }
       });
     });
-  });
+  }
+  
+  // Run at DOMContentLoaded and export function for immediate use
+  document.addEventListener('DOMContentLoaded', initCustomSelects);
+  
+  // Make function available globally
+  window.initCustomSelects = initCustomSelects;
 </script>

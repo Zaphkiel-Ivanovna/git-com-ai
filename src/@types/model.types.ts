@@ -14,10 +14,14 @@ export interface IModelConfig {
 export enum OpenAIModel {
   GPT_4O = 'gpt-4o',
   GPT_4O_MINI = 'gpt-4o-mini',
+  GPT_41 = 'gpt-4.1',
+  GPT_41_MINI = 'gpt-4.1-mini',
+  GPT_41_NANO = 'gpt-4.1-nano',
   O1 = 'o1',
-  O3_MINI = 'o3-mini',
   O1_MINI = 'o1-mini',
-  GPT_45_PREVIEW = 'gpt-4.5-preview',
+  O3 = 'o3',
+  O3_MINI = 'o3-mini',
+  O4_MINI = 'o4-mini',
 }
 
 export enum AnthropicModel {
@@ -69,28 +73,51 @@ export const OPENAI_MODEL_DETAILS: Record<OpenAIModel, IModelDetails> = {
   },
   [OpenAIModel.O1]: {
     title: 'o1',
-    description: "OpenAI's most powerful reasoning model",
+    description: 'Previous full o-series reasoning model',
     inputPrice: 15.0,
     outputPrice: 60.0,
   },
-  [OpenAIModel.O3_MINI]: {
-    title: 'o3-mini',
-    description: 'Compact multimodal model with good performance',
-    inputPrice: 1.1,
-    outputPrice: 4.4,
-  },
   [OpenAIModel.O1_MINI]: {
     title: 'o1-mini',
-    description: 'Smaller version of o1 with efficient reasoning capabilities',
+    description: 'A small model alternative to o1',
     inputPrice: 1.1,
     outputPrice: 4.4,
   },
-  [OpenAIModel.GPT_45_PREVIEW]: {
-    title: 'GPT-4.5 Preview',
-    description:
-      "OpenAI's most advanced model with enhanced reasoning capabilities",
-    inputPrice: 75.0,
-    outputPrice: 150.0,
+  [OpenAIModel.O3_MINI]: {
+    title: 'o3-mini',
+    description: 'A small model alternative to o3',
+    inputPrice: 1.1,
+    outputPrice: 4.4,
+  },
+  [OpenAIModel.O3]: {
+    title: 'o3',
+    description: 'Our most powerful reasoning model',
+    inputPrice: 10.0,
+    outputPrice: 40.0,
+  },
+  [OpenAIModel.GPT_41]: {
+    title: 'gpt-4.1',
+    description: 'Flagship GPT model for complex tasks',
+    inputPrice: 2.0,
+    outputPrice: 8.0,
+  },
+  [OpenAIModel.GPT_41_MINI]: {
+    title: 'gpt-4.1-mini',
+    description: 'Balanced for intelligence, speed, and cost',
+    inputPrice: 0.4,
+    outputPrice: 1.6,
+  },
+  [OpenAIModel.GPT_41_NANO]: {
+    title: 'gpt-4.1-nano',
+    description: 'Fastest, most cost-effective GPT-4.1 model',
+    inputPrice: 0.1,
+    outputPrice: 0.4,
+  },
+  [OpenAIModel.O4_MINI]: {
+    title: 'o4-mini',
+    description: 'Faster, more affordable reasoning model',
+    inputPrice: 1.1,
+    outputPrice: 4.4,
   },
 };
 
