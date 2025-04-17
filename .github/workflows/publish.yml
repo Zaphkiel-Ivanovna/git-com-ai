@@ -1,10 +1,10 @@
-name: 🚀 Publish VS Code Extension
+name: 🚀 Publish GitCom-AI Extension
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: '📝 Version to publish (e.g., 1.0.0)'
+        description: '📝 Version to publish (e.g., 1.0.8)'
         required: true
         type: string
   
@@ -31,6 +31,9 @@ jobs:
       - name: 🔍 Install dependencies
         run: npm ci
         
+      - name: 🧪 Run tests
+        run: npm test
+        
       - name: 📄 Lint code
         run: npm run lint
         
@@ -41,7 +44,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: extension-package
-          path: '*.vsix'
+          path: 'build/gitcomai-*.vsix'
           if-no-files-found: error
 
   security-scan:
@@ -108,7 +111,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: updated-extension-package
-          path: '*.vsix'
+          path: 'build/gitcomai-*.vsix'
           if-no-files-found: error
           
       - name: 💾 Commit version changes
@@ -140,6 +143,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: updated-extension-package
+          path: build
           
       - name: 📝 Get Release Info
         id: release-info
@@ -151,7 +155,7 @@ jobs:
           if grep -q "## $VERSION" CHANGELOG.md; then
             RELEASE_NOTES=$(cat CHANGELOG.md | sed -n "/## $VERSION/,/## /p" | sed '1d;$d')
           else
-            RELEASE_NOTES="Release version $VERSION"
+            RELEASE_NOTES="🚀 GitCom-AI v$VERSION - Generate commit messages using AI based on git diff"
           fi
           
           echo "notes<<EOF" >> $GITHUB_OUTPUT
@@ -163,6 +167,7 @@ jobs:
         with:
           pat: ${{ secrets.VSCE_PAT }}
           registryUrl: https://marketplace.visualstudio.com
+          packagePath: build/gitcomai-${{ github.event.inputs.version }}.vsix
           
       - name: 🏷️ Create Git Tag
         run: |
@@ -175,8 +180,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: "v${{ github.event.inputs.version }}"
-          name: "🚀 Release v${{ github.event.inputs.version }}"
+          name: "🚀 GitCom-AI v${{ github.event.inputs.version }}"
           body: ${{ steps.release-info.outputs.notes }}
-          files: "*.vsix"
+          files: "build/gitcomai-${{ github.event.inputs.version }}.vsix"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
