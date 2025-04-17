@@ -1,7 +1,6 @@
 name: 🚀 Publish GitCom-AI Extension
 
 on:
-  # Allow manual triggering from GitHub Actions UI
   workflow_dispatch:
     inputs:
       version:
@@ -9,7 +8,6 @@ on:
         required: true
         type: string
   
-  # Also run build & test on push to main (but don't publish)
   push:
     branches:
       - main
@@ -37,7 +35,14 @@ jobs:
         run: npm run lint
         
       - name: 🔧 Build extension
-        run: npm run build
+        run: |
+          # Create build directory if it doesn't exist
+          mkdir -p build
+          npm run build
+          
+          # List the created artifacts to verify
+          echo "Contents of build directory after build:"
+          ls -la build/
         
       - name: 📤 Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -136,6 +141,7 @@ jobs:
             echo "::error::Then add it as a secret named VSCE_PAT in your GitHub repository Settings > Secrets and variables > Actions"
             exit 1
           fi
+          echo "✅ VSCE_PAT secret is configured"
       - name: ✅ Checkout code
         uses: actions/checkout@v4
         with:
@@ -151,7 +157,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: updated-extension-package
-          path: build
+          path: ./build
+          
+      - name: 📋 List downloaded artifacts
+        run: |
+          echo "Contents of ./build directory:"
+          ls -la ./build
+          echo "--------------------------"
           
       - name: 📝 Get Release Info
         id: release-info
@@ -175,7 +187,8 @@ jobs:
         with:
           pat: ${{ secrets.VSCE_PAT }}
           registryUrl: https://marketplace.visualstudio.com
-          packagePath: build/gitcomai-${{ github.event.inputs.version }}.vsix
+          extensionFile: ./build/gitcomai-${{ github.event.inputs.version }}.vsix
+          packagePath: ''
           
       - name: 🏷️ Create Git Tag
         run: |
