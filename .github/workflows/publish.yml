@@ -1,0 +1,184 @@
+name: 🚀 Publish GitCom-AI Extension
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '📝 Version to publish (e.g., 1.0.8)'
+        required: true
+        type: string
+  
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: 🔨 Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: ✅ Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+          
+      - name: 🔍 Install dependencies
+        run: npm ci
+        
+      - name: 📄 Lint code
+        run: npm run lint
+        
+      - name: 🔧 Build extension
+        run: npm run build
+        
+      - name: 📤 Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-package
+          path: 'build/gitcomai-*.vsix'
+          if-no-files-found: error
+
+  security-scan:
+    name: 🛡️ Security Scan
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: ✅ Checkout code
+        uses: actions/checkout@v4
+        
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+          
+      - name: 🔍 Install dependencies
+        run: npm ci
+        
+      - name: 🔒 Run npm audit
+        run: npm audit --audit-level=high || true
+        
+      - name: 🔍 Run CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          languages: javascript, typescript
+
+  update-version:
+    name: 🔄 Update Version
+    runs-on: ubuntu-latest
+    needs: [build, security-scan]
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: ✅ Checkout code
+        uses: actions/checkout@v4
+        
+      - name: 📝 Update package.json version
+        run: |
+          # Get current version from package.json
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version in package.json: $CURRENT_VERSION"
+          echo "Version to set: ${{ github.event.inputs.version }}"
+          
+          # Update version in package.json
+          sed -i 's/"version": "'$CURRENT_VERSION'"/"version": "${{ github.event.inputs.version }}"/' package.json
+          
+          # Verify update
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "Updated version in package.json: $NEW_VERSION"
+          
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+          
+      - name: 🔍 Install dependencies
+        run: npm ci
+          
+      - name: 🔧 Rebuild with new version
+        run: npm run build
+        
+      - name: 📤 Upload updated artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: updated-extension-package
+          path: 'build/gitcomai-*.vsix'
+          if-no-files-found: error
+          
+      - name: 💾 Commit version changes
+        run: |
+          git config --global user.name 'GitHub Actions Bot'
+          git config --global user.email 'actions@github.com'
+          git add package.json
+          git commit -m "🔖 Bump version to ${{ github.event.inputs.version }}"
+          git push
+
+  publish:
+    name: 📢 Publish to Marketplace
+    runs-on: ubuntu-latest
+    needs: update-version
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: ✅ Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+        
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+          
+      - name: 📥 Download updated build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: updated-extension-package
+          path: build
+          
+      - name: 📝 Get Release Info
+        id: release-info
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          
+          # Extract release notes from CHANGELOG.md if available
+          if grep -q "## $VERSION" CHANGELOG.md; then
+            RELEASE_NOTES=$(cat CHANGELOG.md | sed -n "/## $VERSION/,/## /p" | sed '1d;$d')
+          else
+            RELEASE_NOTES="🚀 GitCom-AI v$VERSION - Generate commit messages using AI based on git diff"
+          fi
+          
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$RELEASE_NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+      - name: 🚀 Publish to Visual Studio Marketplace
+        uses: HaaLeo/publish-vscode-extension@v2
+        with:
+          pat: ${{ secrets.VSCE_PAT }}
+          registryUrl: https://marketplace.visualstudio.com
+          packagePath: build/gitcomai-${{ github.event.inputs.version }}.vsix
+          
+      - name: 🏷️ Create Git Tag
+        run: |
+          git config --global user.name 'GitHub Actions Bot'
+          git config --global user.email 'actions@github.com'
+          git tag -a "v${{ github.event.inputs.version }}" -m "Release v${{ github.event.inputs.version }}"
+          git push origin "v${{ github.event.inputs.version }}"
+          
+      - name: 📢 Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${{ github.event.inputs.version }}"
+          name: "🚀 GitCom-AI v${{ github.event.inputs.version }}"
+          body: ${{ steps.release-info.outputs.notes }}
+          files: "build/gitcomai-${{ github.event.inputs.version }}.vsix"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
