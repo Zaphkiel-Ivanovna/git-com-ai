@@ -1,6 +1,7 @@
 name: 🚀 Publish GitCom-AI Extension
 
 on:
+  # Allow manual triggering from GitHub Actions UI
   workflow_dispatch:
     inputs:
       version:
@@ -8,6 +9,7 @@ on:
         required: true
         type: string
   
+  # Also run build & test on push to main (but don't publish)
   push:
     branches:
       - main
@@ -30,7 +32,7 @@ jobs:
           
       - name: 🔍 Install dependencies
         run: npm ci
-        
+      
       - name: 📄 Lint code
         run: npm run lint
         
@@ -80,12 +82,18 @@ jobs:
           echo "Current version in package.json: $CURRENT_VERSION"
           echo "Version to set: ${{ github.event.inputs.version }}"
           
-          # Update version in package.json
-          sed -i 's/"version": "'$CURRENT_VERSION'"/"version": "${{ github.event.inputs.version }}"/' package.json
-          
-          # Verify update
-          NEW_VERSION=$(node -p "require('./package.json').version")
-          echo "Updated version in package.json: $NEW_VERSION"
+          if [ "$CURRENT_VERSION" == "${{ github.event.inputs.version }}" ]; then
+            echo "⚠️ Warning: Input version matches current version, no change needed but proceeding with publish"
+            # Force a timestamp change to ensure we can commit
+            touch package.json
+          else
+            # Update version in package.json
+            sed -i 's/"version": "'$CURRENT_VERSION'"/"version": "${{ github.event.inputs.version }}"/' package.json
+            
+            # Verify update
+            NEW_VERSION=$(node -p "require('./package.json').version")
+            echo "Updated version in package.json: $NEW_VERSION"
+          fi
           
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
@@ -111,8 +119,8 @@ jobs:
           git config --global user.name 'GitHub Actions Bot'
           git config --global user.email 'actions@github.com'
           git add package.json
-          git commit -m "🔖 Bump version to ${{ github.event.inputs.version }}"
-          git push
+          git commit -m "🔖 Bump version to ${{ github.event.inputs.version }}" || echo "No changes to commit or version unchanged"
+          git push || echo "Nothing to push"
 
   publish:
     name: 📢 Publish to Marketplace
