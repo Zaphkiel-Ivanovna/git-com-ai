@@ -32,7 +32,7 @@ jobs:
           
       - name: 🔍 Install dependencies
         run: npm ci
-      
+        
       - name: 📄 Lint code
         run: npm run lint
         
@@ -127,6 +127,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: update-version
     if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: ✅ Check for PAT secret
+        run: |
+          if [[ -z "${{ secrets.VSCE_PAT }}" ]]; then
+            echo "::error::The VSCE_PAT secret is not set. Please add a Personal Access Token with 'Marketplace (publish)' scope in your repository secrets."
+            echo "::error::Visit Azure DevOps Personal Access Tokens page: https://dev.azure.com/your-organization/_usersSettings/tokens"
+            echo "::error::Then add it as a secret named VSCE_PAT in your GitHub repository Settings > Secrets and variables > Actions"
+            exit 1
+          fi
+          echo "✅ VSCE_PAT secret is configured"
     steps:
       - name: ✅ Checkout code
         uses: actions/checkout@v4
