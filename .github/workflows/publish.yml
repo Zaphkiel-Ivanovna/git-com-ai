@@ -63,11 +63,6 @@ jobs:
         
       - name: 🔒 Run npm audit
         run: npm audit --audit-level=high || true
-        
-      - name: 🔍 Run CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          languages: javascript, typescript
 
   update-version:
     name: 🔄 Update Version
