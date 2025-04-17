@@ -1,6 +1,7 @@
 name: 🚀 Publish GitCom-AI Extension
 
 on:
+  # Allow manual triggering from GitHub Actions UI
   workflow_dispatch:
     inputs:
       version:
@@ -8,6 +9,7 @@ on:
         required: true
         type: string
   
+  # Also run build & test on push to main (but don't publish)
   push:
     branches:
       - main
@@ -124,6 +126,10 @@ jobs:
           git config --global user.name 'GitHub Actions Bot'
           git config --global user.email 'actions@github.com'
           git add package.json
+          
+          # Use token for authentication
+          git remote set-url origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
+          
           git commit -m "🔖 Bump version to ${{ github.event.inputs.version }}" || echo "No changes to commit or version unchanged"
           git push || echo "Nothing to push"
 
@@ -194,6 +200,10 @@ jobs:
         run: |
           git config --global user.name 'GitHub Actions Bot'
           git config --global user.email 'actions@github.com'
+          
+          # Use token for authentication
+          git remote set-url origin https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
+          
           git tag -a "v${{ github.event.inputs.version }}" -m "Release v${{ github.event.inputs.version }}"
           git push origin "v${{ github.event.inputs.version }}"
           
