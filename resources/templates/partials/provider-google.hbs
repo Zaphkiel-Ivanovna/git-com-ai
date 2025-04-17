@@ -1,0 +1,17 @@
+<div id="google-section" class="model-section card {{#if isGoogleSelected}}active{{/if}}">
+    <div class="card-header">
+        <svg class="card-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21.7385 10.1333H12.2308V13.5999H17.7692C17.5385 16.0666 15.1923 17.3999 12.2308 17.3999C8.73077 17.3999 5.96154 14.7333 5.96154 11.1999C5.96154 7.6666 8.73077 4.9999 12.2308 4.9999C13.7692 4.9999 15.1538 5.5333 16.2692 6.4666L18.8462 3.8666C16.9615 2.1999 14.6923 1.1999 12.2308 1.1999C6.38462 1.1999 1.84615 5.8666 1.84615 11.1999C1.84615 16.5333 6.38462 21.1999 12.2308 21.1999C17.7692 21.1999 22.1538 17.4666 22.1538 11.1999C22.1538 10.7999 22.0769 10.4666 21.7385 10.1333Z" fill="currentColor"/>
+        </svg>
+        <h2 class="card-title">Google Configuration</h2>
+    </div>
+    <div class="form-group">
+        {{> model-selector googleModelSelector}}
+    </div>
+    <div class="form-group">
+        <label for="google-api-key">API Key:</label>
+        <div class="api-key-container">
+            <input type="password" id="google-api-key" value="{{googleApiKey}}" />
+        </div>
+    </div>
+</div>

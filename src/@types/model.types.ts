@@ -3,11 +3,12 @@ export enum AIProvider {
   OPENAI = 'openai',
   MISTRAL = 'mistral',
   OLLAMA = 'ollama',
+  GOOGLE = 'google',
 }
 
 export interface IModelConfig {
   provider: AIProvider;
-  model: OpenAIModel | AnthropicModel | MistralModel | string;
+  model: OpenAIModel | AnthropicModel | MistralModel | GoogleModel | string;
 }
 
 export enum OpenAIModel {
@@ -36,6 +37,14 @@ export enum MistralModel {
   MINISTRAL_3B = 'ministral-3b-latest',
 }
 
+export enum GoogleModel {
+  GEMINI_2_5_PRO_EXPERIMENTAL = 'gemini-2.5-pro-exp-03-25',
+  GEMINI_2_0_FLASH = 'gemini-2.0-flash',
+  GEMINI_2_0_FLASH_LITE = 'gemini-2.0-flash-lite',
+  GEMINI_1_5_PRO = 'gemini-1.5-pro',
+  GEMINI_1_5_FLASH = 'gemini-1.5-flash',
+}
+
 export interface IModelDetails {
   title: string;
   description: string;
@@ -43,7 +52,7 @@ export interface IModelDetails {
   outputPrice: number; // Price per 1M tokens for output
 }
 
-export type AIModel = OpenAIModel | AnthropicModel | MistralModel;
+export type AIModel = OpenAIModel | AnthropicModel | MistralModel | GoogleModel;
 
 export const OPENAI_MODEL_DETAILS: Record<OpenAIModel, IModelDetails> = {
   [OpenAIModel.GPT_4O]: {
@@ -158,8 +167,42 @@ export const MISTRAL_MODEL_DETAILS: Record<MistralModel, IModelDetails> = {
   },
 };
 
+export const GOOGLE_MODEL_DETAILS: Record<GoogleModel, IModelDetails> = {
+  [GoogleModel.GEMINI_2_5_PRO_EXPERIMENTAL]: {
+    title: 'Gemini 2.5 Pro Experimental',
+    description: 'High-end model for advanced tasks, coding, and reasoning.',
+    inputPrice: 2.5,
+    outputPrice: 15.0,
+  },
+  [GoogleModel.GEMINI_2_0_FLASH]: {
+    title: 'Gemini 2.0 Flash',
+    description: 'Fast, multimodal model designed for efficient execution.',
+    inputPrice: 0.1,
+    outputPrice: 0.4,
+  },
+  [GoogleModel.GEMINI_2_0_FLASH_LITE]: {
+    title: 'Gemini 2.0 Flash Lite',
+    description: 'Ultra-lightweight model for large-scale deployments.',
+    inputPrice: 0.075,
+    outputPrice: 0.3,
+  },
+  [GoogleModel.GEMINI_1_5_PRO]: {
+    title: 'Gemini 1.5 Pro',
+    description: 'Advanced generation model with long context support.',
+    inputPrice: 1.0,
+    outputPrice: 5.0,
+  },
+  [GoogleModel.GEMINI_1_5_FLASH]: {
+    title: 'Gemini 1.5 Flash',
+    description: 'Performance-optimized model for low-latency use cases.',
+    inputPrice: 0.35,
+    outputPrice: 1.4,
+  },
+};
+
 export const ALL_MODEL_DETAILS: Record<string, IModelDetails> = {
   ...OPENAI_MODEL_DETAILS,
   ...ANTHROPIC_MODEL_DETAILS,
   ...MISTRAL_MODEL_DETAILS,
+  ...GOOGLE_MODEL_DETAILS,
 };

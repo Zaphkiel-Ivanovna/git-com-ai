@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
-import { streamObject } from 'ai';
+import { LanguageModelV1, streamObject } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createMistral } from '@ai-sdk/mistral';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { logger } from '../utils/logger.util';
 import {
   commitMessageSchema,
@@ -25,6 +26,7 @@ export class AIService {
     anthropic: undefined,
     openai: undefined,
     mistral: undefined,
+    google: undefined,
   };
 
   constructor() {
@@ -44,6 +46,7 @@ export class AIService {
       anthropic: config.get<string>('anthropicApiKey'),
       openai: config.get<string>('openaiApiKey'),
       mistral: config.get<string>('mistralApiKey'),
+      google: config.get<string>('googleApiKey'),
     };
     logger.debug('API keys loaded');
   }
@@ -83,6 +86,16 @@ export class AIService {
         }
         const mistral = createMistral({ apiKey: this.apiKeys.mistral });
         return { model, provider: mistral };
+      }
+
+      case AIProvider.GOOGLE: {
+        if (!this.apiKeys.google) {
+          throw new Error('Google API key not configured');
+        }
+        const google = createGoogleGenerativeAI({
+          apiKey: this.apiKeys.google,
+        });
+        return { model, provider: google };
       }
 
       case AIProvider.OLLAMA: {
@@ -159,8 +172,9 @@ export class AIService {
 
         try {
           return new Promise<ICommitMessage | null>((resolve, reject) => {
+            const modelInstance = provider(model, { structuredOutputs: true });
             const { partialObjectStream, warnings } = streamObject({
-              model: provider(model, { structuredOutputs: true }),
+              model: modelInstance as LanguageModelV1,
               schema: commitMessageSchema,
               maxTokens: config.maxTokens,
               temperature: config.temperature,

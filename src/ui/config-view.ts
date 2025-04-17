@@ -11,6 +11,7 @@ import {
   ANTHROPIC_MODEL_DETAILS,
   MISTRAL_MODEL_DETAILS,
   OPENAI_MODEL_DETAILS,
+  GOOGLE_MODEL_DETAILS,
 } from '../@types/model.types';
 import { ollamaService } from '../services/ollama.service';
 
@@ -98,6 +99,11 @@ export class ConfigView {
     await configuration.update(
       'mistralApiKey',
       config.mistralApiKey,
+      vscode.ConfigurationTarget.Global
+    );
+    await configuration.update(
+      'googleApiKey',
+      config.googleApiKey,
       vscode.ConfigurationTarget.Global
     );
     await configuration.update(
@@ -394,6 +400,17 @@ export class ConfigView {
         }
       );
 
+      const googleModelOptions = Object.entries(GOOGLE_MODEL_DETAILS).map(
+        ([modelValue, modelDetails]) => {
+          return {
+            ...modelDetails,
+            value: modelValue,
+            provider: AIProvider.GOOGLE,
+            selected: modelConfig.model === modelValue,
+          };
+        }
+      );
+
       return compiledTemplate({
         cssContent,
 
@@ -402,6 +419,7 @@ export class ConfigView {
         isAnthropicSelected: modelConfig.provider === AIProvider.ANTHROPIC,
         isOpenAISelected: modelConfig.provider === AIProvider.OPENAI,
         isMistralSelected: modelConfig.provider === AIProvider.MISTRAL,
+        isGoogleSelected: modelConfig.provider === AIProvider.GOOGLE,
         isOllamaSelected: modelConfig.provider === AIProvider.OLLAMA,
 
         anthropicModelSelector: {
@@ -422,10 +440,17 @@ export class ConfigView {
           selectedProvider: AIProvider.MISTRAL,
           options: mistralModelOptions,
         },
+        googleModelSelector: {
+          id: 'google-model',
+          name: 'google-model',
+          selectedProvider: AIProvider.GOOGLE,
+          options: googleModelOptions,
+        },
 
         anthropicApiKey: config.get<string>('anthropicApiKey') || '',
         openaiApiKey: config.get<string>('openaiApiKey') || '',
         mistralApiKey: config.get<string>('mistralApiKey') || '',
+        googleApiKey: config.get<string>('googleApiKey') || '',
         ollamaBaseURL:
           config.get<string>('ollamaBaseURL') || 'http://localhost:11434',
         ollamaModels: this.ollamaModels,
