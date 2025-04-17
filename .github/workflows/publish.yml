@@ -18,30 +18,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ✅ Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       
-      - name: 📦 Setup Node.js
-        uses: actions/setup-node@v3
+      - name: 📦 Setup Node.js with pnpm
+        uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: 'lts/*'
+          cache: 'pnpm'
+      
+      - name: 🧰 Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+          run_install: false
           
       - name: 🔍 Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
         
       - name: 🧪 Run tests
-        run: npm test
+        run: pnpm test
         
       - name: 📄 Lint code
-        run: npm run lint
+        run: pnpm run lint
         
       - name: 🔧 Build extension
-        run: npm run build
+        run: pnpm run build
         
       - name: 📤 Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: extension-package
           path: '*.vsix'
@@ -53,21 +59,27 @@ jobs:
     needs: build
     steps:
       - name: ✅ Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         
-      - name: 📦 Setup Node.js
-        uses: actions/setup-node@v3
+      - name: 📦 Setup Node.js with pnpm
+        uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 'lts/*'
+      
+      - name: 🧰 Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+          run_install: false
           
       - name: 🔍 Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
         
-      - name: 🔒 Run npm audit
-        run: npm audit --production
+      - name: 🔒 Run pnpm audit
+        run: pnpm audit --audit-level=high
         
       - name: 🔍 Run CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3
         with:
           languages: javascript, typescript
 
@@ -78,7 +90,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     steps:
       - name: ✅ Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         
       - name: 📝 Update package.json version
         run: |
@@ -94,19 +106,25 @@ jobs:
           NEW_VERSION=$(node -p "require('./package.json').version")
           echo "Updated version in package.json: $NEW_VERSION"
           
-      - name: 📦 Setup Node.js
-        uses: actions/setup-node@v3
+      - name: 📦 Setup Node.js with pnpm
+        uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 'lts/*'
+      
+      - name: 🧰 Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+          run_install: false
           
       - name: 🔍 Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
           
       - name: 🔧 Rebuild with new version
-        run: npm run build
+        run: pnpm run build
         
       - name: 📤 Upload updated artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: updated-extension-package
           path: '*.vsix'
@@ -127,15 +145,17 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     steps:
       - name: ✅ Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          ref: main
         
       - name: 📦 Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 'lts/*'
           
       - name: 📥 Download updated build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: updated-extension-package
           
@@ -157,7 +177,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
           
       - name: 🚀 Publish to Visual Studio Marketplace
-        uses: HaaLeo/publish-vscode-extension@v1
+        uses: HaaLeo/publish-vscode-extension@v2
         with:
           pat: ${{ secrets.VSCE_PAT }}
           registryUrl: https://marketplace.visualstudio.com
@@ -170,7 +190,7 @@ jobs:
           git push origin "v${{ github.event.inputs.version }}"
           
       - name: 📢 Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: "v${{ github.event.inputs.version }}"
           name: "🚀 Release v${{ github.event.inputs.version }}"
