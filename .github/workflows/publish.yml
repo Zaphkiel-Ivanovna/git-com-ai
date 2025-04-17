@@ -136,7 +136,6 @@ jobs:
             echo "::error::Then add it as a secret named VSCE_PAT in your GitHub repository Settings > Secrets and variables > Actions"
             exit 1
           fi
-          echo "✅ VSCE_PAT secret is configured"
     steps:
       - name: ✅ Checkout code
         uses: actions/checkout@v4
