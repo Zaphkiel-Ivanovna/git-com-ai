@@ -22,29 +22,23 @@ jobs:
         with:
           fetch-depth: 0
       
-      - name: 🧰 Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: latest
-          run_install: false
-      
-      - name: 📦 Setup Node.js with pnpm
+      - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
-          cache: 'pnpm'
+          cache: 'npm'
           
       - name: 🔍 Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
         
       - name: 🧪 Run tests
-        run: pnpm test
+        run: npm test
         
       - name: 📄 Lint code
-        run: pnpm run lint
+        run: npm run lint
         
       - name: 🔧 Build extension
-        run: pnpm run build
+        run: npm run build
         
       - name: 📤 Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -61,23 +55,17 @@ jobs:
       - name: ✅ Checkout code
         uses: actions/checkout@v4
         
-      - name: 🧰 Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: latest
-          run_install: false
-      
-      - name: 📦 Setup Node.js with pnpm
+      - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
-          cache: 'pnpm'
+          cache: 'npm'
           
       - name: 🔍 Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
         
-      - name: 🔒 Run pnpm audit
-        run: pnpm audit --audit-level=high || true
+      - name: 🔒 Run npm audit
+        run: npm audit --audit-level=high || true
         
       - name: 🔍 Run CodeQL Analysis
         uses: github/codeql-action/analyze@v3
@@ -107,22 +95,17 @@ jobs:
           NEW_VERSION=$(node -p "require('./package.json').version")
           echo "Updated version in package.json: $NEW_VERSION"
           
-      - name: 📦 Setup Node.js with pnpm
+      - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
-      
-      - name: 🧰 Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: latest
-          run_install: false
+          cache: 'npm'
           
       - name: 🔍 Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
           
       - name: 🔧 Rebuild with new version
-        run: pnpm run build
+        run: npm run build
         
       - name: 📤 Upload updated artifacts
         uses: actions/upload-artifact@v4
@@ -150,17 +133,11 @@ jobs:
         with:
           ref: main
         
-      - name: 🧰 Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: latest
-          run_install: false
-          
-      - name: 📦 Setup Node.js with pnpm
+      - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
-          cache: 'pnpm'
+          cache: 'npm'
           
       - name: 📥 Download updated build artifacts
         uses: actions/download-artifact@v4
