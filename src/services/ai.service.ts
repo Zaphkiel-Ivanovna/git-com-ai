@@ -26,7 +26,7 @@ const MODELS_USING_MAX_OUTPUT_TOKENS = [
 ] as const;
 
 // Type definitions for StreamObject parameters
-interface StreamObjectUsage {
+interface IStreamObjectUsage {
   inputTokens: number | undefined;
   outputTokens: number | undefined;
   totalTokens: number | undefined;
@@ -34,12 +34,12 @@ interface StreamObjectUsage {
   cachedInputTokens?: number | undefined;
 }
 
-interface StreamObjectFinishResult {
-  usage: StreamObjectUsage;
+interface IStreamObjectFinishResult {
+  usage: IStreamObjectUsage;
   object: ICommitMessage | undefined;
 }
 
-interface StreamObjectErrorEvent {
+interface IStreamObjectErrorEvent {
   error: unknown;
 }
 
@@ -189,7 +189,7 @@ export class AIService {
                 model as (typeof MODELS_USING_MAX_OUTPUT_TOKENS)[number]
               );
 
-            const onErrorHandler = ({ error }: StreamObjectErrorEvent) => {
+            const onErrorHandler = ({ error }: IStreamObjectErrorEvent) => {
               if (UnsupportedFunctionalityError.isInstance(error)) {
                 logger.error(
                   'Unsupported functionality error',
@@ -210,7 +210,7 @@ export class AIService {
             const onFinishHandler = ({
               usage,
               object,
-            }: StreamObjectFinishResult) => {
+            }: IStreamObjectFinishResult) => {
               logger.debug(`Usage: ${JSON.stringify(usage)}`);
 
               const cost = calculateCost(
