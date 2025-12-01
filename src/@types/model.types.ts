@@ -12,6 +12,9 @@ export interface IModelConfig {
 }
 
 export enum OpenAIModel {
+  GPT_5 = 'gpt-5',
+  GPT_5_MINI = 'gpt-5-mini',
+  GPT_5_NANO = 'gpt-5-nano',
   GPT_4O = 'gpt-4o',
   GPT_4O_MINI = 'gpt-4o-mini',
   GPT_41 = 'gpt-4.1',
@@ -25,8 +28,11 @@ export enum OpenAIModel {
 }
 
 export enum AnthropicModel {
-  CLAUDE_3_5_SONNET = 'claude-3-5-sonnet-latest',
+  CLAUDE_OPUS_4_1 = 'claude-opus-4-1',
+  CLAUDE_OPUS_4 = 'claude-opus-4-0',
+  CLAUDE_SONNET_4 = 'claude-sonnet-4-0',
   CLAUDE_3_7_SONNET = 'claude-3-7-sonnet-latest',
+  CLAUDE_3_5_SONNET = 'claude-3-5-sonnet-latest',
   CLAUDE_3_5_HAIKU = 'claude-3-5-haiku-latest',
   CLAUDE_3_OPUS = 'claude-3-opus-latest',
   CLAUDE_3_SONNET = 'claude-3-sonnet-latest',
@@ -59,6 +65,26 @@ export interface IModelDetails {
 export type AIModel = OpenAIModel | AnthropicModel | MistralModel | GoogleModel;
 
 export const OPENAI_MODEL_DETAILS: Record<OpenAIModel, IModelDetails> = {
+  [OpenAIModel.GPT_5]: {
+    title: 'GPT-5',
+    description:
+      'The best model for coding and agentic tasks across industries',
+    inputPrice: 1.25,
+    outputPrice: 10.0,
+  },
+  [OpenAIModel.GPT_5_MINI]: {
+    title: 'GPT-5 mini',
+    description: 'A faster, cheaper version of GPT-5 for well-defined tasks',
+    inputPrice: 0.25,
+    outputPrice: 2.0,
+  },
+  [OpenAIModel.GPT_5_NANO]: {
+    title: 'GPT-5 nano',
+    description:
+      'The fastest, cheapest version of GPT-5—great for summarization and classification tasks',
+    inputPrice: 0.05,
+    outputPrice: 0.4,
+  },
   [OpenAIModel.GPT_4O]: {
     title: 'GPT-4o',
     description: 'Multimodal model with strong reasoning and coding abilities',
@@ -122,30 +148,47 @@ export const OPENAI_MODEL_DETAILS: Record<OpenAIModel, IModelDetails> = {
 };
 
 export const ANTHROPIC_MODEL_DETAILS: Record<AnthropicModel, IModelDetails> = {
+  [AnthropicModel.CLAUDE_OPUS_4_1]: {
+    title: 'Claude Opus 4.1',
+    description: 'Our most capable model',
+    inputPrice: 15.0,
+    outputPrice: 75.0,
+  },
+  [AnthropicModel.CLAUDE_OPUS_4]: {
+    title: 'Claude Opus 4',
+    description: 'Our previous flagship model',
+    inputPrice: 15.0,
+    outputPrice: 75.0,
+  },
+  [AnthropicModel.CLAUDE_SONNET_4]: {
+    title: 'Claude Sonnet 4',
+    description: 'High-performance model',
+    inputPrice: 3.0,
+    outputPrice: 15.0,
+  },
   [AnthropicModel.CLAUDE_3_7_SONNET]: {
-    title: 'Claude 3.7 Sonnet',
-    description:
-      'Latest Sonnet model with enhanced reasoning and coding abilities',
+    title: 'Claude Sonnet 3.7',
+    description: 'High-performance model with early extended thinking',
+    inputPrice: 3.0,
+    outputPrice: 15.0,
+  },
+  [AnthropicModel.CLAUDE_3_5_SONNET]: {
+    title: 'Claude Sonnet 3.5',
+    description: 'Our previous intelligent model',
     inputPrice: 3.0,
     outputPrice: 15.0,
   },
   [AnthropicModel.CLAUDE_3_5_HAIKU]: {
-    title: 'Claude 3.5 Haiku',
-    description: 'Fast and efficient model for everyday tasks',
+    title: 'Claude Haiku 3.5',
+    description: 'Our fastest model',
     inputPrice: 0.8,
     outputPrice: 4.0,
   },
   [AnthropicModel.CLAUDE_3_OPUS]: {
-    title: 'Claude 3 Opus',
+    title: 'Claude Opus 3',
     description: "Anthropic's most powerful model for complex reasoning",
     inputPrice: 15.0,
     outputPrice: 75.0,
-  },
-  [AnthropicModel.CLAUDE_3_5_SONNET]: {
-    title: 'Claude 3.5 Sonnet',
-    description: 'Balanced model with strong reasoning capabilities',
-    inputPrice: 3.0,
-    outputPrice: 15.0,
   },
   [AnthropicModel.CLAUDE_3_SONNET]: {
     title: 'Claude 3 Sonnet',
@@ -154,8 +197,8 @@ export const ANTHROPIC_MODEL_DETAILS: Record<AnthropicModel, IModelDetails> = {
     outputPrice: 15.0,
   },
   [AnthropicModel.CLAUDE_3_HAIKU]: {
-    title: 'Claude 3 Haiku',
-    description: 'Fast and cost-effective model for simpler tasks',
+    title: 'Claude Haiku 3',
+    description: 'Fast and compact model for near-instant responsiveness',
     inputPrice: 0.25,
     outputPrice: 1.25,
   },

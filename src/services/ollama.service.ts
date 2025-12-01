@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { Ollama, ModelResponse } from 'ollama';
 import { logger } from '../utils/logger.util';
 import { formatSize } from '../utils/format.util';
-import { createOllama } from 'ollama-ai-provider';
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 
 interface IProgressData {
   progressPercent: number;
@@ -53,14 +53,15 @@ export class OllamaService {
   }
 
   /**
-   * Get the Ollama provider instance with the current configuration
+   * Get the Ollama provider instance with the current configuration using @ai-sdk/openai-compatible
    */
   public getProvider() {
-    const options = this.baseURL
-      ? { baseURL: `${this.baseURL}/api` }
-      : undefined;
-
-    return createOllama(options);
+    return createOpenAICompatible({
+      name: 'ollama',
+      baseURL: this.baseURL
+        ? `${this.baseURL}/v1`
+        : 'http://localhost:11434/v1',
+    });
   }
 
   /**

@@ -1,25 +1,47 @@
 import * as vscode from 'vscode';
-import { LanguageModelV1, streamObject } from 'ai';
+import { streamObject, UnsupportedFunctionalityError } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createMistral } from '@ai-sdk/mistral';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
+
 import { logger } from '../utils/logger.util';
-import {
-  commitMessageSchema,
-  ICommitBodyItem,
-  ICommitMessage,
-} from '../models/commit.schema';
+import { commitMessageSchema, ICommitMessage } from '../models/commit.schema';
 import { loadCommitPrompt } from '../utils/prompt-loader.util';
 import {
   IModelConfig,
   AIProvider,
   AnthropicModel,
+  OpenAIModel,
 } from '../@types/model.types';
 import { calculateCost } from '../utils/cost.util';
 import { formatCommitMessage } from '../utils/format.util';
 import { GitExtension, InputBox } from '../@types/git';
 import { ollamaService } from './ollama.service';
+
+const MODELS_USING_MAX_OUTPUT_TOKENS = [
+  OpenAIModel.GPT_5,
+  OpenAIModel.GPT_5_MINI,
+  OpenAIModel.GPT_5_NANO,
+] as const;
+
+// Type definitions for StreamObject parameters
+interface StreamObjectUsage {
+  inputTokens: number | undefined;
+  outputTokens: number | undefined;
+  totalTokens: number | undefined;
+  reasoningTokens?: number | undefined;
+  cachedInputTokens?: number | undefined;
+}
+
+interface StreamObjectFinishResult {
+  usage: StreamObjectUsage;
+  object: ICommitMessage | undefined;
+}
+
+interface StreamObjectErrorEvent {
+  error: unknown;
+}
 
 export class AIService {
   private apiKeys: Record<string, string | undefined> = {
@@ -75,7 +97,6 @@ export class AIService {
         }
         const openai = createOpenAI({
           apiKey: this.apiKeys.openai,
-          compatibility: 'strict',
         });
         return { model, provider: openai };
       }
@@ -172,56 +193,88 @@ export class AIService {
 
         try {
           return new Promise<ICommitMessage | null>((resolve, reject) => {
-            const modelInstance = provider(model, { structuredOutputs: true });
+            const modelInstance = provider(model);
+
+            const usesMaxOutputTokens =
+              modelConfig.provider === AIProvider.OPENAI &&
+              MODELS_USING_MAX_OUTPUT_TOKENS.includes(
+                model as (typeof MODELS_USING_MAX_OUTPUT_TOKENS)[number]
+              );
+
+            const onErrorHandler = ({ error }: StreamObjectErrorEvent) => {
+              if (UnsupportedFunctionalityError.isInstance(error)) {
+                logger.error(
+                  'Unsupported functionality error',
+                  JSON.stringify(error)
+                );
+                reject(
+                  error instanceof Error ? error : new Error(String(error))
+                );
+              }
+
+              logger.error(
+                'Error generating commit message',
+                JSON.stringify(error)
+              );
+              reject(error instanceof Error ? error : new Error(String(error)));
+            };
+
+            const onFinishHandler = ({
+              usage,
+              object,
+            }: StreamObjectFinishResult) => {
+              logger.debug(`Usage: ${JSON.stringify(usage)}`);
+
+              const cost = calculateCost(
+                modelConfig,
+                usage.inputTokens || 0,
+                usage.outputTokens || 0
+              );
+
+              const totalTokens =
+                usage.totalTokens ||
+                (usage.inputTokens || 0) + (usage.outputTokens || 0);
+
+              if (cost) {
+                progress.report({
+                  message: `Commit usage: ${totalTokens} tokens (Cost: $${cost})`,
+                  increment: 100,
+                });
+              } else {
+                progress.report({
+                  message: `Commit usage: ${totalTokens} tokens`,
+                  increment: 100,
+                });
+              }
+
+              if (object && gitInputBox) {
+                const finalFormattedMessage = formatCommitMessage(object);
+                gitInputBox.value = finalFormattedMessage;
+              }
+
+              logger.debug(
+                `Generated commit message: ${JSON.stringify(object)}`
+              );
+
+              logger.debug(`Cost: $${cost}`);
+
+              resolve(object || null);
+            };
+
+            // TODO: Fix this type error when the AI SDK is updated
             const { partialObjectStream, warnings } = streamObject({
-              model: modelInstance as LanguageModelV1,
+              model: modelInstance,
               schema: commitMessageSchema,
-              maxTokens: config.maxTokens,
               temperature: config.temperature,
               prompt: `${prompts.systemPrompt}\n\n${prompts.userPrompt}`,
               abortSignal: controller.signal,
-              onError: (error) => {
-                logger.error(
-                  'Error generating commit message',
-                  JSON.stringify(error)
-                );
-                reject(error);
-              },
-              onFinish: ({ usage, object }) => {
-                logger.debug(`Usage: ${JSON.stringify(usage)}`);
-
-                const cost = calculateCost(
-                  modelConfig,
-                  usage.promptTokens,
-                  usage.completionTokens
-                );
-
-                if (cost) {
-                  progress.report({
-                    message: `Commit usage: ${usage.totalTokens} tokens (Cost: $${cost})`,
-                    increment: 100,
-                  });
-                } else {
-                  progress.report({
-                    message: `Commit usage: ${usage.totalTokens} tokens`,
-                    increment: 100,
-                  });
-                }
-
-                if (object && gitInputBox) {
-                  const finalFormattedMessage = formatCommitMessage(object);
-                  gitInputBox.value = finalFormattedMessage;
-                }
-
-                logger.debug(
-                  `Generated commit message: ${JSON.stringify(object)}`
-                );
-
-                logger.debug(`Cost: $${cost}`);
-
-                resolve(object || null);
-              },
-            });
+              onError: onErrorHandler,
+              onFinish: onFinishHandler,
+              reasoningEffort: 'minimal',
+              ...(usesMaxOutputTokens
+                ? { maxOutputTokens: config.maxTokens }
+                : { maxTokens: config.maxTokens }),
+            } as never);
 
             logger.debug('Temperature: ' + config.temperature);
             logger.debug('Max tokens: ' + config.maxTokens);
@@ -231,16 +284,16 @@ export class AIService {
             (async () => {
               try {
                 for await (const chunk of partialObjectStream) {
-                  if (chunk) {
+                  logger.debug(JSON.stringify(chunk));
+                  if (chunk && typeof chunk === 'object' && chunk !== null) {
+                    const typedChunk = chunk as Partial<ICommitMessage>;
                     commitMessage = {
-                      emoji: chunk.emoji || commitMessage.emoji,
-                      type: chunk.type || commitMessage.type,
-                      scope: chunk.scope || commitMessage.scope,
+                      emoji: typedChunk.emoji || commitMessage.emoji,
+                      type: typedChunk.type || commitMessage.type,
+                      scope: typedChunk.scope || commitMessage.scope,
                       description:
-                        chunk.description || commitMessage.description,
-                      body:
-                        (chunk.body as ICommitBodyItem[] | undefined) ||
-                        commitMessage.body,
+                        typedChunk.description || commitMessage.description,
+                      body: typedChunk.body || commitMessage.body,
                     };
 
                     const formattedMessage =
