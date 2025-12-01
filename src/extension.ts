@@ -3,7 +3,6 @@ import { GitService } from './services/git.service';
 import { AIService } from './services/ai.service';
 import { Logger } from './utils/logger.util';
 import { ConfigView } from './ui/config-view';
-import { GitExtension } from './@types/git';
 import { AIProvider, IModelConfig } from './@types/model.types';
 
 const logger = Logger.getInstance();
@@ -22,21 +21,45 @@ export function activate(context: vscode.ExtensionContext): void {
 
     const generateCommitMessageCmd = vscode.commands.registerCommand(
       'gitcomai.generateCommitMessage',
-      async () => {
+      async (arg?) => {
         logger.log('Command gitcomai.generateCommitMessage executed');
 
+        let selectedRepository = null;
         try {
-          const gitExtension =
-            vscode.extensions.getExtension<GitExtension>('vscode.git')?.exports;
-          if (!gitExtension) {
-            vscode.window.showErrorMessage('Git extension not found');
-            return;
-          }
-          const gitApi = gitExtension.getAPI(1);
-          if (!gitApi.repositories || gitApi.repositories.length === 0) {
+          logger.log('Getting repositories...');
+          const repositories = await gitService.getRepositories();
+          logger.log(`Found ${repositories.length} repositories`);
+
+          if (repositories.length === 0) {
             vscode.window.showErrorMessage('No Git repository found');
             return;
           }
+
+          // When clicked from SCM title/inputBox, arg is the Repository object itself
+          if (
+            arg &&
+            typeof arg === 'object' &&
+            'rootUri' in arg &&
+            'inputBox' in arg
+          ) {
+            selectedRepository = arg;
+            logger.log(
+              `Repository detected from SCM: ${selectedRepository.rootUri.fsPath}`
+            );
+          }
+
+          // Fallback: if not triggered from SCM or repository not found
+          if (!selectedRepository) {
+            logger.log('No repository from context, prompting user...');
+            selectedRepository = await gitService.selectRepository();
+          }
+
+          if (!selectedRepository) {
+            logger.warn('No repository selected');
+            return;
+          }
+
+          logger.log(`Using repository: ${selectedRepository.rootUri.fsPath}`);
         } catch (error) {
           logger.error('Error checking Git repository', error);
           vscode.window.showErrorMessage('Failed to verify Git repository');
@@ -53,13 +76,15 @@ export function activate(context: vscode.ExtensionContext): void {
               progress.report({ increment: 0, message: 'Getting git diff...' });
               logger.log('Getting git diff');
 
-              const gitDiff = await gitService.getGitDiff();
+              const gitDiff = await gitService.getGitDiff(selectedRepository);
               if (!gitDiff) {
                 logger.warn('No git diff found');
                 return;
               }
 
-              const stagedFiles = await gitService.getStagedFiles();
+              const stagedFiles = await gitService.getStagedFiles(
+                selectedRepository
+              );
               logger.log(`Found ${stagedFiles.length} staged files`);
 
               progress.report({
@@ -73,7 +98,8 @@ export function activate(context: vscode.ExtensionContext): void {
                 gitDiff,
                 stagedFiles,
                 progress,
-                token
+                token,
+                selectedRepository
               );
 
               if (!commitMessage) {
@@ -81,6 +107,8 @@ export function activate(context: vscode.ExtensionContext): void {
                 return;
               }
               logger.log('Commit message generation completed');
+
+              // Message is already set in the inputBox by the AI service during streaming
 
               return new Promise<void>((resolve) => {
                 setTimeout(() => {

@@ -16,7 +16,7 @@ import {
 } from '../@types/model.types';
 import { calculateCost } from '../utils/cost.util';
 import { formatCommitMessage } from '../utils/format.util';
-import { GitExtension, InputBox } from '../@types/git';
+import { Repository, InputBox } from '../@types/git';
 import { ollamaService } from './ollama.service';
 
 const MODELS_USING_MAX_OUTPUT_TOKENS = [
@@ -129,25 +129,12 @@ export class AIService {
     }
   }
 
-  private getGitInputBox(): InputBox | null {
+  private getGitInputBox(repository?: Repository): InputBox | null {
     try {
-      const gitExtension =
-        vscode.extensions.getExtension<GitExtension>('vscode.git')?.exports;
-      if (!gitExtension) {
-        logger.warn('Git extension not found');
-        return null;
+      if (repository) {
+        return repository.inputBox;
       }
-
-      const gitAPI = gitExtension.getAPI(1);
-      const repositories = gitAPI.repositories;
-
-      if (repositories.length === 0) {
-        logger.warn('No Git repositories found');
-        return null;
-      }
-
-      const repository = repositories[0];
-      return repository.inputBox;
+      return null;
     } catch (error) {
       logger.error('Error getting Git input box', error);
       return null;
@@ -158,7 +145,8 @@ export class AIService {
     diff: string,
     files: string[],
     progress: vscode.Progress<{ message?: string; increment?: number }>,
-    token: vscode.CancellationToken
+    token: vscode.CancellationToken,
+    repository?: Repository
   ): Promise<ICommitMessage | null> {
     try {
       this.reinitialize();
@@ -176,7 +164,7 @@ export class AIService {
 
         const { model, provider } = this.getModelInstance(modelConfig);
 
-        const gitInputBox = this.getGitInputBox();
+        const gitInputBox = this.getGitInputBox(repository);
         let commitMessage: ICommitMessage = {
           emoji: '' as never,
           type: '' as never,
@@ -247,18 +235,21 @@ export class AIService {
                 });
               }
 
-              if (object && gitInputBox) {
-                const finalFormattedMessage = formatCommitMessage(object);
+              // Use the object from the stream if available, otherwise use the accumulated commitMessage
+              const finalMessage = object || commitMessage;
+
+              if (finalMessage && gitInputBox) {
+                const finalFormattedMessage = formatCommitMessage(finalMessage);
                 gitInputBox.value = finalFormattedMessage;
               }
 
               logger.debug(
-                `Generated commit message: ${JSON.stringify(object)}`
+                `Generated commit message: ${JSON.stringify(finalMessage)}`
               );
 
               logger.debug(`Cost: $${cost}`);
 
-              resolve(object || null);
+              resolve(finalMessage || null);
             };
 
             // TODO: Fix this type error when the AI SDK is updated

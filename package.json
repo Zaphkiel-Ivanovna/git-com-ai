@@ -2,7 +2,7 @@
   "name": "gitcomai",
   "displayName": "GitCom-AI",
   "description": "Generate commit messages using AI based on git diff",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "engines": {
     "vscode": "^1.95.0"
   },
@@ -11,6 +11,9 @@
   "icon": "images/logo.png",
   "categories": [
     "Other"
+  ],
+  "extensionDependencies": [
+    "vscode.git"
   ],
   "activationEvents": [
     "onCommand:gitcomai.generateCommitMessage"
