@@ -12,6 +12,7 @@ import {
   MISTRAL_MODEL_DETAILS,
   OPENAI_MODEL_DETAILS,
   GOOGLE_MODEL_DETAILS,
+  CLAUDE_CODE_MODEL_DETAILS,
 } from '../@types/model.types';
 import { ollamaService } from '../services/ollama.service';
 
@@ -104,6 +105,11 @@ export class ConfigView {
     await configuration.update(
       'googleApiKey',
       config.googleApiKey,
+      vscode.ConfigurationTarget.Global
+    );
+    await configuration.update(
+      'claudeCodePath',
+      config.claudeCodePath,
       vscode.ConfigurationTarget.Global
     );
     await configuration.update(
@@ -371,7 +377,7 @@ export class ConfigView {
       const config = vscode.workspace.getConfiguration('gitcomai');
       const modelConfig = config.get<IModelConfig>('selectedModel') || {
         provider: AIProvider.ANTHROPIC,
-        model: AnthropicModel.CLAUDE_3_7_SONNET,
+        model: AnthropicModel.CLAUDE_SONNET_4_6,
       };
 
       const openaiModelOptions = Object.entries(OPENAI_MODEL_DETAILS).map(
@@ -418,6 +424,17 @@ export class ConfigView {
         }
       );
 
+      const claudeCodeModelOptions = Object.entries(
+        CLAUDE_CODE_MODEL_DETAILS
+      ).map(([modelValue, modelDetails]) => {
+        return {
+          ...modelDetails,
+          value: modelValue,
+          provider: AIProvider.CLAUDE_CODE,
+          selected: modelConfig.model === modelValue,
+        };
+      });
+
       return compiledTemplate({
         cssContent,
 
@@ -428,6 +445,7 @@ export class ConfigView {
         isMistralSelected: modelConfig.provider === AIProvider.MISTRAL,
         isGoogleSelected: modelConfig.provider === AIProvider.GOOGLE,
         isOllamaSelected: modelConfig.provider === AIProvider.OLLAMA,
+        isClaudeCodeSelected: modelConfig.provider === AIProvider.CLAUDE_CODE,
 
         anthropicModelSelector: {
           id: 'anthropic-model',
@@ -453,11 +471,18 @@ export class ConfigView {
           selectedProvider: AIProvider.GOOGLE,
           options: googleModelOptions,
         },
+        claudeCodeModelSelector: {
+          id: 'claude-code-model',
+          name: 'claude-code-model',
+          selectedProvider: AIProvider.CLAUDE_CODE,
+          options: claudeCodeModelOptions,
+        },
 
         anthropicApiKey: config.get<string>('anthropicApiKey') || '',
         openaiApiKey: config.get<string>('openaiApiKey') || '',
         mistralApiKey: config.get<string>('mistralApiKey') || '',
         googleApiKey: config.get<string>('googleApiKey') || '',
+        claudeCodePath: config.get<string>('claudeCodePath') || 'claude',
         ollamaBaseURL:
           config.get<string>('ollamaBaseURL') || 'http://localhost:11434',
         ollamaModels: this.ollamaModels,

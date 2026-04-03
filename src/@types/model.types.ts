@@ -4,11 +4,18 @@ export enum AIProvider {
   MISTRAL = 'mistral',
   OLLAMA = 'ollama',
   GOOGLE = 'google',
+  CLAUDE_CODE = 'claude-code',
 }
 
 export interface IModelConfig {
   provider: AIProvider;
-  model: OpenAIModel | AnthropicModel | MistralModel | GoogleModel | string;
+  model:
+    | OpenAIModel
+    | AnthropicModel
+    | MistralModel
+    | GoogleModel
+    | ClaudeCodeModel
+    | string;
 }
 
 export enum OpenAIModel {
@@ -28,15 +35,17 @@ export enum OpenAIModel {
 }
 
 export enum AnthropicModel {
-  CLAUDE_OPUS_4_1 = 'claude-opus-4-1',
-  CLAUDE_OPUS_4 = 'claude-opus-4-0',
-  CLAUDE_SONNET_4 = 'claude-sonnet-4-0',
+  CLAUDE_OPUS_4_6 = 'claude-opus-4-6',
+  CLAUDE_SONNET_4_6 = 'claude-sonnet-4-6',
+  CLAUDE_OPUS_4_5 = 'claude-opus-4-5-20251101',
+  CLAUDE_SONNET_4_5 = 'claude-sonnet-4-5-20250929',
+  CLAUDE_HAIKU_4_5 = 'claude-haiku-4-5-20251001',
+  CLAUDE_OPUS_4_1 = 'claude-opus-4-1-20250805',
+  CLAUDE_OPUS_4 = 'claude-opus-4-20250514',
+  CLAUDE_SONNET_4 = 'claude-sonnet-4-20250514',
   CLAUDE_3_7_SONNET = 'claude-3-7-sonnet-latest',
   CLAUDE_3_5_SONNET = 'claude-3-5-sonnet-latest',
   CLAUDE_3_5_HAIKU = 'claude-3-5-haiku-latest',
-  CLAUDE_3_OPUS = 'claude-3-opus-latest',
-  CLAUDE_3_SONNET = 'claude-3-sonnet-latest',
-  CLAUDE_3_HAIKU = 'claude-3-haiku-latest',
 }
 
 export enum MistralModel {
@@ -55,6 +64,19 @@ export enum GoogleModel {
   GEMINI_1_5_FLASH = 'gemini-1.5-flash',
 }
 
+export enum ClaudeCodeModel {
+  CLAUDE_OPUS_4_6 = 'claude-opus-4-6',
+  CLAUDE_SONNET_4_6 = 'claude-sonnet-4-6',
+  CLAUDE_OPUS_4_5 = 'claude-opus-4-5-20251101',
+  CLAUDE_SONNET_4_5 = 'claude-sonnet-4-5-20250929',
+  CLAUDE_HAIKU_4_5 = 'claude-haiku-4-5-20251001',
+  CLAUDE_OPUS_4_1 = 'claude-opus-4-1-20250805',
+  CLAUDE_SONNET_4 = 'claude-sonnet-4-20250514',
+  CLAUDE_3_7_SONNET = 'claude-3-7-sonnet-latest',
+  CLAUDE_3_5_SONNET = 'claude-3-5-sonnet-latest',
+  CLAUDE_3_5_HAIKU = 'claude-3-5-haiku-latest',
+}
+
 export interface IModelDetails {
   title: string;
   description: string;
@@ -62,7 +84,12 @@ export interface IModelDetails {
   outputPrice: number; // Price per 1M tokens for output
 }
 
-export type AIModel = OpenAIModel | AnthropicModel | MistralModel | GoogleModel;
+export type AIModel =
+  | OpenAIModel
+  | AnthropicModel
+  | MistralModel
+  | GoogleModel
+  | ClaudeCodeModel;
 
 export const OPENAI_MODEL_DETAILS: Record<OpenAIModel, IModelDetails> = {
   [OpenAIModel.GPT_5]: {
@@ -148,59 +175,71 @@ export const OPENAI_MODEL_DETAILS: Record<OpenAIModel, IModelDetails> = {
 };
 
 export const ANTHROPIC_MODEL_DETAILS: Record<AnthropicModel, IModelDetails> = {
+  [AnthropicModel.CLAUDE_OPUS_4_6]: {
+    title: 'Claude Opus 4.6',
+    description: 'Most intelligent model for agents and coding',
+    inputPrice: 5.0,
+    outputPrice: 25.0,
+  },
+  [AnthropicModel.CLAUDE_SONNET_4_6]: {
+    title: 'Claude Sonnet 4.6',
+    description: 'Best combination of speed and intelligence',
+    inputPrice: 3.0,
+    outputPrice: 15.0,
+  },
+  [AnthropicModel.CLAUDE_OPUS_4_5]: {
+    title: 'Claude Opus 4.5',
+    description: 'Balanced performance model',
+    inputPrice: 5.0,
+    outputPrice: 25.0,
+  },
+  [AnthropicModel.CLAUDE_SONNET_4_5]: {
+    title: 'Claude Sonnet 4.5',
+    description: 'Fast, intelligent model',
+    inputPrice: 3.0,
+    outputPrice: 15.0,
+  },
+  [AnthropicModel.CLAUDE_HAIKU_4_5]: {
+    title: 'Claude Haiku 4.5',
+    description: 'Fastest model with near-frontier intelligence',
+    inputPrice: 1.0,
+    outputPrice: 5.0,
+  },
   [AnthropicModel.CLAUDE_OPUS_4_1]: {
     title: 'Claude Opus 4.1',
-    description: 'Our most capable model',
+    description: 'Enterprise-grade model',
     inputPrice: 15.0,
     outputPrice: 75.0,
   },
   [AnthropicModel.CLAUDE_OPUS_4]: {
     title: 'Claude Opus 4',
-    description: 'Our previous flagship model',
+    description: 'Previous generation Opus',
     inputPrice: 15.0,
     outputPrice: 75.0,
   },
   [AnthropicModel.CLAUDE_SONNET_4]: {
     title: 'Claude Sonnet 4',
-    description: 'High-performance model',
+    description: 'Fast model (legacy)',
     inputPrice: 3.0,
     outputPrice: 15.0,
   },
   [AnthropicModel.CLAUDE_3_7_SONNET]: {
     title: 'Claude Sonnet 3.7',
-    description: 'High-performance model with early extended thinking',
+    description: 'Extended thinking model (legacy)',
     inputPrice: 3.0,
     outputPrice: 15.0,
   },
   [AnthropicModel.CLAUDE_3_5_SONNET]: {
     title: 'Claude Sonnet 3.5',
-    description: 'Our previous intelligent model',
+    description: 'Previous intelligent model (legacy)',
     inputPrice: 3.0,
     outputPrice: 15.0,
   },
   [AnthropicModel.CLAUDE_3_5_HAIKU]: {
     title: 'Claude Haiku 3.5',
-    description: 'Our fastest model',
+    description: 'Fast and compact model (legacy)',
     inputPrice: 0.8,
     outputPrice: 4.0,
-  },
-  [AnthropicModel.CLAUDE_3_OPUS]: {
-    title: 'Claude Opus 3',
-    description: "Anthropic's most powerful model for complex reasoning",
-    inputPrice: 15.0,
-    outputPrice: 75.0,
-  },
-  [AnthropicModel.CLAUDE_3_SONNET]: {
-    title: 'Claude 3 Sonnet',
-    description: 'Versatile model for a wide range of tasks',
-    inputPrice: 3.0,
-    outputPrice: 15.0,
-  },
-  [AnthropicModel.CLAUDE_3_HAIKU]: {
-    title: 'Claude Haiku 3',
-    description: 'Fast and compact model for near-instant responsiveness',
-    inputPrice: 0.25,
-    outputPrice: 1.25,
   },
 };
 
@@ -270,9 +309,74 @@ export const GOOGLE_MODEL_DETAILS: Record<GoogleModel, IModelDetails> = {
   },
 };
 
+export const CLAUDE_CODE_MODEL_DETAILS: Record<ClaudeCodeModel, IModelDetails> =
+  {
+    [ClaudeCodeModel.CLAUDE_OPUS_4_6]: {
+      title: 'Claude Opus 4.6',
+      description: 'Most intelligent model via Claude Code CLI',
+      inputPrice: 5.0,
+      outputPrice: 25.0,
+    },
+    [ClaudeCodeModel.CLAUDE_SONNET_4_6]: {
+      title: 'Claude Sonnet 4.6',
+      description: 'Best speed/intelligence balance via CLI',
+      inputPrice: 3.0,
+      outputPrice: 15.0,
+    },
+    [ClaudeCodeModel.CLAUDE_OPUS_4_5]: {
+      title: 'Claude Opus 4.5',
+      description: 'Balanced performance via CLI',
+      inputPrice: 5.0,
+      outputPrice: 25.0,
+    },
+    [ClaudeCodeModel.CLAUDE_SONNET_4_5]: {
+      title: 'Claude Sonnet 4.5',
+      description: 'Fast, intelligent model via CLI',
+      inputPrice: 3.0,
+      outputPrice: 15.0,
+    },
+    [ClaudeCodeModel.CLAUDE_HAIKU_4_5]: {
+      title: 'Claude Haiku 4.5',
+      description: 'Fastest model via CLI',
+      inputPrice: 1.0,
+      outputPrice: 5.0,
+    },
+    [ClaudeCodeModel.CLAUDE_OPUS_4_1]: {
+      title: 'Claude Opus 4.1',
+      description: 'Enterprise-grade via CLI',
+      inputPrice: 15.0,
+      outputPrice: 75.0,
+    },
+    [ClaudeCodeModel.CLAUDE_SONNET_4]: {
+      title: 'Claude Sonnet 4',
+      description: 'Fast model via CLI (legacy)',
+      inputPrice: 3.0,
+      outputPrice: 15.0,
+    },
+    [ClaudeCodeModel.CLAUDE_3_7_SONNET]: {
+      title: 'Claude Sonnet 3.7',
+      description: 'Extended thinking via CLI (legacy)',
+      inputPrice: 3.0,
+      outputPrice: 15.0,
+    },
+    [ClaudeCodeModel.CLAUDE_3_5_SONNET]: {
+      title: 'Claude Sonnet 3.5',
+      description: 'Previous intelligent model via CLI (legacy)',
+      inputPrice: 3.0,
+      outputPrice: 15.0,
+    },
+    [ClaudeCodeModel.CLAUDE_3_5_HAIKU]: {
+      title: 'Claude Haiku 3.5',
+      description: 'Fast and affordable via CLI (legacy)',
+      inputPrice: 0.8,
+      outputPrice: 4.0,
+    },
+  };
+
 export const ALL_MODEL_DETAILS: Record<string, IModelDetails> = {
   ...OPENAI_MODEL_DETAILS,
   ...ANTHROPIC_MODEL_DETAILS,
   ...MISTRAL_MODEL_DETAILS,
   ...GOOGLE_MODEL_DETAILS,
+  ...CLAUDE_CODE_MODEL_DETAILS,
 };

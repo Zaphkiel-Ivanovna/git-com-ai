@@ -1,0 +1,62 @@
+<div id="claude-code-section" class="model-section card {{#if isClaudeCodeSelected}}active{{/if}}">
+    <div class="card-header">
+        <svg class="card-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13.7888 3.932L20.2221 20.0681H23.75L17.3167 3.932H13.7888Z" fill="currentColor" />
+            <path d="M6.32538 13.6828L8.52662 8.01213L10.7279 13.6828H6.32538ZM6.68225 3.932L0.25 20.0681H3.84652L5.16202 16.6795H11.8914L13.2067 20.0681H16.8033L10.371 3.932H6.68225Z" fill="currentColor" />
+        </svg>
+        <h2 class="card-title">Claude Code Configuration</h2>
+    </div>
+    <div class="form-group">
+        {{> model-selector claudeCodeModelSelector}}
+    </div>
+    <div class="form-group">
+        <label for="claude-code-path">
+            Executable Path:
+            <div class="tooltip">
+                <svg class="tooltip-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 16v-4"></path>
+                    <path d="M12 8h.01"></path>
+                </svg>
+                <span class="tooltip-text">Path to the Claude Code CLI executable. Use "claude" if it's in your PATH, or provide a full path (e.g. /usr/local/bin/claude).</span>
+            </div>
+        </label>
+        <input type="text" id="claude-code-path" value="{{claudeCodePath}}" placeholder="claude" />
+    </div>
+    <div class="form-group">
+        <div class="claude-code-info">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 16v-4"></path>
+                <path d="M12 8h.01"></path>
+            </svg>
+            <span>Uses Claude Code CLI. Make sure <code>claude</code> is installed and authenticated on your system.</span>
+        </div>
+    </div>
+</div>
+
+<style>
+    .claude-code-info {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 10px 12px;
+        background-color: var(--vscode-textBlockQuote-background);
+        border-left: 3px solid var(--vscode-textLink-foreground);
+        border-radius: 4px;
+        font-size: 12px;
+        color: var(--vscode-descriptionForeground);
+        line-height: 1.4;
+    }
+    .claude-code-info svg {
+        flex-shrink: 0;
+        margin-top: 1px;
+        color: var(--vscode-textLink-foreground);
+    }
+    .claude-code-info code {
+        background-color: var(--vscode-textCodeBlock-background);
+        padding: 1px 4px;
+        border-radius: 3px;
+        font-family: var(--vscode-editor-font-family);
+    }
+</style>

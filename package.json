@@ -2,7 +2,7 @@
   "name": "gitcomai",
   "displayName": "GitCom-AI",
   "description": "Generate commit messages using AI based on git diff",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "engines": {
     "vscode": "^1.95.0"
   },
@@ -67,7 +67,7 @@
           "type": "object",
           "default": {
             "provider": "anthropic",
-            "model": "claude-3-7-sonnet-latest"
+            "model": "claude-sonnet-4-6"
           },
           "description": "The AI model to use for generating commit messages",
           "properties": {
@@ -78,7 +78,8 @@
                 "openai",
                 "mistral",
                 "google",
-                "ollama"
+                "ollama",
+                "claude-code"
               ],
               "default": "anthropic",
               "description": "The AI provider to use"
@@ -108,6 +109,11 @@
           "type": "string",
           "default": "",
           "description": "API Key for Google Gemini"
+        },
+        "gitcomai.claudeCodePath": {
+          "type": "string",
+          "default": "claude",
+          "description": "Path to the Claude Code CLI executable (default: claude)"
         },
         "gitcomai.ollamaBaseURL": {
           "type": "string",

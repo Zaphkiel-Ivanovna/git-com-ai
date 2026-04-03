@@ -38,6 +38,7 @@
                     <option value="mistral" {{#if isMistralSelected}}selected{{/if}}>Mistral AI</option>
                     <option value="google" {{#if isGoogleSelected}}selected{{/if}}>Google AI</option>
                     <option value="ollama" {{#if isOllamaSelected}}selected{{/if}}>Ollama (Local)</option>
+                    <option value="claude-code" {{#if isClaudeCodeSelected}}selected{{/if}}>Claude Code (CLI)</option>
                 </select>
             </div>
         </div>
@@ -47,6 +48,7 @@
         {{> provider-mistral}}
         {{> provider-google}}
         {{> provider-ollama}}
+        {{> provider-claude-code}}
     </div>
 
     <div class="tab-content" id="generation-tab">
@@ -176,7 +178,8 @@
                 'openai': document.getElementById('openai-section'),
                 'mistral': document.getElementById('mistral-section'),
                 'google': document.getElementById('google-section'),
-                'ollama': document.getElementById('ollama-section')
+                'ollama': document.getElementById('ollama-section'),
+                'claude-code': document.getElementById('claude-code-section')
             };
                         
             providerSelect.addEventListener('change', () => {
@@ -246,6 +249,9 @@
                     case 'ollama':
                         model = document.getElementById('ollama-model').value;
                         break;
+                    case 'claude-code':
+                        model = document.getElementById('claude-code-model').value;
+                        break;
                 }
                 
                 const config = {
@@ -255,6 +261,7 @@
                     openaiApiKey: document.getElementById('openai-api-key').value,
                     mistralApiKey: document.getElementById('mistral-api-key').value,
                     googleApiKey: document.getElementById('google-api-key').value,
+                    claudeCodePath: (document.getElementById('claude-code-path') || {}).value || 'claude',
                     ollamaBaseURL: document.getElementById('ollama-base-url').value,
                     temperature: parseFloat(document.getElementById('temperature-input').value),
                     maxTokens: parseInt(document.getElementById('max-tokens-input').value),
@@ -463,14 +470,13 @@
               });
             });
             
-            // Add mutation observer to reinitialize custom selects when DOM changes
-            const observer = new MutationObserver((mutations) => {
+            // One-shot mutation observer: reinitialize custom selects on first DOM change, then stop
+            const observer = new MutationObserver(() => {
+                observer.disconnect();
                 if (typeof window.initCustomSelects === 'function') {
                     window.initCustomSelects();
                 }
             });
-            
-            // Start observing the document with the configured parameters
             observer.observe(document.body, { childList: true, subtree: true });
     })();
     </script>

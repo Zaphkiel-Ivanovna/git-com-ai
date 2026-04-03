@@ -7,7 +7,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 
 import { logger } from '../utils/logger.util';
 import { commitMessageSchema, ICommitMessage } from '../models/commit.schema';
-import { loadCommitPrompt } from '../utils/prompt-loader.util';
+import { loadCommitPrompt, IPrompts } from '../utils/prompt-loader.util';
 import {
   IModelConfig,
   AIProvider,
@@ -18,6 +18,7 @@ import { calculateCost } from '../utils/cost.util';
 import { formatCommitMessage } from '../utils/format.util';
 import { Repository, InputBox } from '../@types/git';
 import { ollamaService } from './ollama.service';
+import { claudeCodeService } from './claude-code.service';
 
 const MODELS_USING_MAX_OUTPUT_TOKENS = [
   OpenAIModel.GPT_5,
@@ -154,10 +155,20 @@ export class AIService {
       const config = vscode.workspace.getConfiguration('gitcomai');
       const modelConfig: IModelConfig = config.get('selectedModel') || {
         provider: AIProvider.ANTHROPIC,
-        model: AnthropicModel.CLAUDE_3_7_SONNET,
+        model: AnthropicModel.CLAUDE_SONNET_4_6,
       };
 
       const prompts = await loadCommitPrompt(diff, files);
+
+      if (modelConfig.provider === AIProvider.CLAUDE_CODE) {
+        return this.generateWithClaudeCode(
+          modelConfig,
+          prompts,
+          progress,
+          token,
+          repository
+        );
+      }
 
       try {
         logger.debug('Generating commit message with AI SDK using stream');
@@ -340,6 +351,131 @@ export class AIService {
         }`
       );
       return null;
+    }
+  }
+
+  private async generateWithClaudeCode(
+    modelConfig: IModelConfig,
+    prompts: IPrompts,
+    progress: vscode.Progress<{ message?: string; increment?: number }>,
+    token: vscode.CancellationToken,
+    repository?: Repository
+  ): Promise<ICommitMessage | null> {
+    const gitInputBox = this.getGitInputBox(repository);
+
+    const controller = new AbortController();
+    token.onCancellationRequested(() => {
+      controller.abort();
+      logger.debug('Claude Code generation cancelled by user');
+    });
+
+    const jsonSchemaPrompt = `${prompts.systemPrompt}\n\n${prompts.userPrompt}
+
+CRITICAL INSTRUCTION: You MUST respond with ONLY a valid JSON object (no markdown, no code blocks, no explanation). The JSON must match this exact schema:
+{
+  "emoji": "<one of the gitmoji emojis>",
+  "type": "<commit type like feat, fix, refactor, etc.>",
+  "scope": "<optional scope string or null>",
+  "description": "<short description, max 74 chars>",
+  "body": [
+    {
+      "emoji": "<gitmoji>",
+      "type": "<type>",
+      "scope": "<optional scope or null>",
+      "description": "<short description>"
+    }
+  ]
+}
+
+Respond with ONLY the raw JSON object. No other text.`;
+
+    try {
+      logger.debug('Generating commit message with Claude Code CLI');
+      logger.debug(`Model: ${modelConfig.model}`);
+
+      progress.report({
+        message: 'Claude Code is generating...',
+        increment: 10,
+      });
+
+      const config = vscode.workspace.getConfiguration('gitcomai');
+      const claudeCodePath =
+        config.get<string>('claudeCodePath') || 'claude';
+
+      const result = await claudeCodeService.generateCommitMessage(
+        jsonSchemaPrompt,
+        modelConfig.model,
+        claudeCodePath,
+        controller.signal,
+        () => {
+          progress.report({
+            message: 'Claude Code is generating...',
+            increment: 1,
+          });
+        }
+      );
+
+      // Parse the result text as JSON to get ICommitMessage
+      let commitMessage: ICommitMessage;
+      try {
+        let jsonText = result.result.trim();
+
+        // Strip markdown code blocks if present
+        if (jsonText.startsWith('```')) {
+          jsonText = jsonText
+            .replace(/^```(?:json)?\s*\n?/, '')
+            .replace(/\n?```\s*$/, '');
+        }
+
+        const parsed = JSON.parse(jsonText);
+        commitMessage = commitMessageSchema.parse(parsed);
+      } catch (parseError) {
+        logger.error(
+          'Failed to parse Claude Code response as commit message',
+          parseError
+        );
+        logger.debug(`Raw result: ${result.result}`);
+        throw new Error(
+          `Claude Code returned an invalid commit message format: ${parseError instanceof Error ? parseError.message : String(parseError)}`
+        );
+      }
+
+      // Report cost from CLI directly
+      const totalTokens =
+        (result.usage.input_tokens || 0) + (result.usage.output_tokens || 0);
+      const cost = result.total_cost_usd;
+
+      if (cost) {
+        progress.report({
+          message: `Commit usage: ${totalTokens} tokens (Cost: $${cost.toFixed(2)})`,
+          increment: 100,
+        });
+      } else {
+        progress.report({
+          message: `Commit usage: ${totalTokens} tokens`,
+          increment: 100,
+        });
+      }
+
+      // Set final formatted message
+      if (gitInputBox) {
+        gitInputBox.value = formatCommitMessage(commitMessage);
+      }
+
+      logger.debug(
+        `Generated commit message: ${JSON.stringify(commitMessage)}`
+      );
+      logger.debug(`Cost: $${cost}`);
+
+      return commitMessage;
+    } catch (error) {
+      if (controller.signal.aborted) {
+        logger.debug('Claude Code generation was aborted');
+        return null;
+      }
+
+      logger.error('Error generating commit message with Claude Code', error);
+      throw error;
     }
   }
 
